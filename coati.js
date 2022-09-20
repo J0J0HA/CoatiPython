@@ -6,7 +6,7 @@ const Rotation = {
 }
 
 class Field {
-  
+
 }
 
 class Coati {
@@ -18,7 +18,7 @@ class Coati {
   }
 
   __front() {
-    coords = {
+    var coords = {
       x: this.__x,
       y: this.__y
     }
@@ -50,18 +50,18 @@ class Coati {
 
   __left() {
     this.turnLeft();
-    coords = this.__front();
+    var coords = this.__front();
     this.turnRight();
   }
 
   __right() {
     this.turnRight();
-    coords = this.__front();
+    var coords = this.__front();
     this.turnLeft();
   }
 
   move() {
-    coords = this.__front();
+    var coords = this.__front();
     this.x = coords.x;
     this.y = coords.y;
   }
@@ -99,25 +99,33 @@ class Coati {
   }
 
   mushroomFront() {
-    coords = this.__front();
+    var coords = this.__front();
     return this.__f.getLeaf(coords.x, coords.y);
   }
 
   treeFront() {
-    coords = this.__front();
+    var coords = this.__front();
     return this.__f.getTree(coords.x, coords.y);
   }
 
   treeLeft() {
-    coords = this.__left();
+    var coords = this.__left();
     return this.__f.getLeaf(coords.x, coords.y);
   }
 
   treeRight() {
-    coords = this.__right();
+    var coords = this.__right();
     return this.__f.getLeaf(coords.x, coords.y);
   }
 }
 
-window.field = new Field()
-window.coati = new Coati(window.field);
+field = new Field()
+coati = new Coati(window.field);
+window.pycoati = Proxy(coati, {
+  get: () => {
+    this.__f.update();
+  },
+  set: () => {
+    this.__f.update();
+  }
+});
