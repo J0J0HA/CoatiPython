@@ -9,8 +9,8 @@
     <script>
       async function main() {
         let pyodide = await loadPyodide();
-        pyodide.FS.create("caoti.py");
-        pyodide.FS.writeFile("caoti.py", (await (await window.fetch("caoti.py")).text()));
+        pyodide.FS.create("coati.py");
+        pyodide.FS.writeFile("coati.py", (await (await window.fetch("coati.py")).text()));
         pyodide.runPython("import coati");
         while (true) {
           alert(
