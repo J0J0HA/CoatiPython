@@ -1,26 +1,25 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <link href="main.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.6.0/build/styles/atom-one-dark.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js"></script>
-      <script src="coati.js"></script>
+    <script src="coati.js"></script>
+    <script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.6.0/build/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
   </head>
-
   <body>
-    <script>
-      async function main() {
-        let pyodide = await loadPyodide();
-        pyodide.FS.create("coati.py");
-        pyodide.FS.writeFile("coati.py", (await (await window.fetch("coati.py")).text()));
-        pyodide.runPython("import coati");
-        while (true) {
-          alert(
-            pyodide.runPython(
-              prompt()
-            )
-          );
-        }
-      }
-      main();
-    </script>
+    <div class="container">
+      <div class="left">
+        <span id="menu"><center>⋮</center></span>
+        <textarea id="input" value="import coati\n\ncoati.move()"></textarea>
+      </div>
+      <div class="right">
+        <div id="layer-hard"></div>
+        <div id="layer-coati"></div>
+        <div id="layer-leaf"></div>
+      </div>
+    </div>
   </body>
 </html>

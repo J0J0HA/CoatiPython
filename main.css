@@ -1,0 +1,57 @@
+* {
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  color: #abb2bf;
+  background: #282c34;
+}
+
+html, body {
+  height: 100vh;
+  width: 100vw;
+}
+
+.container {
+  display: flex;
+}
+
+.left,
+.right {
+  padding: 5px;
+  height: 100vh;
+  width: 50vw;
+}
+
+#input {
+  height: 100vh;
+  width: 50vw;
+  border: none;
+  resize: none;
+}
+
+#menu {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 30px;
+  height: 30px;
+  font-size: 30px;
+  cursor: pointer;
+}
+
+.title {
+  text-align: center;
+}
+
+@media screen and (max-width: 600px) {
+  .container {
+    flex-direction: column;
+  }
+  .left,
+  .right {
+    width: 100vw;
+  }
+  .content {
+    width: 100vw;
+  }
+}

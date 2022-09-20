@@ -1,3 +1,47 @@
+function getCursorPos(input) {
+    if ("selectionStart" in input && document.activeElement == input) {
+        return {
+            start: input.selectionStart,
+            end: input.selectionEnd
+        };
+    }
+    else if (input.createTextRange) {
+        var sel = document.selection.createRange();
+        if (sel.parentElement() === input) {
+            var rng = input.createTextRange();
+            rng.moveToBookmark(sel.getBookmark());
+            for (var len = 0;
+                     rng.compareEndPoints("EndToStart", rng) > 0;
+                     rng.moveEnd("character", -1)) {
+                len++;
+            }
+            rng.setEndPoint("StartToStart", input.createTextRange());
+            for (var pos = { start: 0, end: len };
+                     rng.compareEndPoints("EndToStart", rng) > 0;
+                     rng.moveEnd("character", -1)) {
+                pos.start++;
+                pos.end++;
+            }
+            return pos;
+        }
+    }
+    return -1;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 const Rotation = {
   front: 0,
   right: 1,
@@ -119,9 +163,9 @@ class Coati {
   }
 }
 
-field = new Field()
-coati = new Coati(window.field);
-window.pycoati = Proxy(coati, {
+var field = new Field()
+var coati = new Coati(window.field);
+window.pycoati = new Proxy(coati, {
   get: () => {
     this.__f.update();
   },
@@ -129,3 +173,53 @@ window.pycoati = Proxy(coati, {
     this.__f.update();
   }
 });
+
+var pyodide = null;
+
+async function main() {
+  pyodide = await loadPyodide();
+  pyodide.FS.create("coati.py");
+  pyodide.FS.writeFile("coati.py", (await (await window.fetch("coati.py")).text()));
+  while (true) {
+    alert(
+      pyodide.runPython(
+        prompt("Run Python:")
+      )
+    );
+  }
+}
+$(() => {
+  $("#input").keydown(() => {
+    if ((event.which || event.keyCode) == 9) {
+      var $input = $("#input");
+      var caretPos = $input[0].selectionStart;
+      var textAreaTxt = $input.val();
+      var txtToAdd = "    ";
+      $input.val(textAreaTxt.substring(0, caretPos) + txtToAdd + textAreaTxt.substring(caretPos) );
+      event.preventDefault()
+    } else if ((event.which || event.keyCode) == 8) {
+      var $input = $("#input");
+      var caretPos = $input[0].selectionStart;
+      var textAreaTxt = $input.val();
+      if (textAreaTxt.substring(0, caretPos).endsWith("    ")) {
+        $input.val(textAreaTxt.substring(0, caretPos - 4) + textAreaTxt.substring(caretPos) );
+        event.preventDefault()
+      }
+    }
+  })
+
+  $("#input").keyup(() => {
+    localStorage.setItem("coatiCode", $("#input").val())
+  })
+
+  if (!localStorage.getItem("coatiCode")) {
+    localStorage.setItem("coatiCode", "import coati\n\nwhile not coati.treeFront():\n    coati.move()")
+  }
+
+  $("#input").val(localStorage.getItem("coatiCode"))
+
+
+  $("#menu").click(() => {
+    alert("Menu not built.")
+  })
+})
