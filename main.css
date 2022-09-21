@@ -4,6 +4,7 @@
   overflow: hidden;
   color: #abb2bf;
   background: #282c34;
+  font-family: Roboto, monospace;
 }
 
 html, body {
@@ -18,32 +19,101 @@ html, body {
 .left,
 .right {
   padding: 5px;
-  height: 100vh;
+  height: calc(99vh - 50px);
   width: 50vw;
+  border: 1px solid #abb2bf;
 }
 
 #input {
-  height: 100vh;
-  width: 50vw;
+  height: 99%;
+  width: 98.5%;
   border: none;
   resize: none;
+  padding: 5px;
+  overflow-x: scroll;
+  white-space: pre;
 }
 
-#menu {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  width: 30px;
-  height: 30px;
+#header {
+  padding: 5px;
   font-size: 30px;
+  font-family: Roboto, monospace;
+}
+
+#run {
+  position: absolute;
+  left: 48vw;
+  height: 60px;
   cursor: pointer;
+  display: none;
+}
+
+#norun {
+  position: absolute;
+  left: 48vw;
+  height: 60px;
+  cursor: not-allowed;
+  display: block;
+}
+
+#title {
+  height: 40px;
+  padding-left: 5px;
+  cursor: pointer;
+  white-space: none;
+}
+
+.img-0-0 {
+  background-color: transparent;
+  background-image: url(img-0-0.png);
+  background-size: cover;
+}
+.img-0-1 {
+  background-color: transparent;
+  background-image: url(img-0-1.png);
+  background-size: cover;
+}
+.img-0-2 {
+  background-color: transparent;
+  background-image: url(img-0-2.png);
+  background-size: cover;
+}
+.img-0-3 {
+  background-color: transparent;
+  background-image: url(img-0-3.png);
+  background-size: cover;
 }
 
 .title {
   text-align: center;
 }
 
+table {
+  width: min(49vw, calc(99vh - 50px));
+  height: min(49vw, calc(99vh - 50px));
+  min-width: 200px;
+  min-height: 200px;
+}
+
+tr {
+  width: 50vmin;
+  height: 5vmin;
+}
+
+td {
+  width: 5vmin;
+  height: 5vmin;
+  max-width: 5vmin;
+  max-height: 5vmin;
+  min-width: 5vmin;
+  min-height: 5vmin;
+  background-color: #343c47;
+}
+
 @media screen and (max-width: 600px) {
+  body {
+    overflow: scroll;
+  }
   .container {
     flex-direction: column;
   }

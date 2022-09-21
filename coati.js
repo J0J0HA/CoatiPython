@@ -29,6 +29,9 @@ function getCursorPos(input) {
 }
 
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 
 
@@ -38,9 +41,12 @@ function getCursorPos(input) {
 
 
 
-
-
-
+const Item = {
+  figure: 0,
+  leaf: 1,
+  mushroom: 2,
+  tree: 3,
+}
 
 const Rotation = {
   front: 0,
@@ -50,12 +56,55 @@ const Rotation = {
 }
 
 class Field {
+  constructor(id, width, height) {
+    this.width = width;
+    this.height = height;
+    this.figure = null;
+    this.id = id;
+  }
 
+  render_get(x, y) {
+    return $($($($(this.id).children()[0]).children()[y]).children()[x]);
+  }
+
+  render_clear() {
+    for (var y = 0; y <= this.height; y++) {
+      for (var x = 0; x <= this.width; x++) {
+        this.render_get(x, y).attr("class", "")
+      }
+    }
+  }
+
+  render_show(i, x, y, r) {
+    if (!(i in Object.values(Item))) {
+      throw new Error("No valid Item: " + i.toString());
+    }
+
+    if (!(r in Object.values(Rotation))) {
+      throw new Error("No valid Rotation: " + r.toString());
+    }
+
+    if (x < 0 || x > this.width) {
+      throw new Error("x is out of bounds: " + x.toString());
+    }
+
+    if (y < 0 || y > this.height) {
+      throw new Error("y is out of bounds: " + y.toString());
+    }
+
+    this.render_get(x, y).attr("class", "img-"+i+"-"+r);
+  }
+
+  update(th, obj) {
+    th.render_clear();
+    th.render_show(Item.figure, obj.coati.__x, obj.coati.__y, obj.coati.__r);
+  }
 }
 
 class Coati {
   constructor(f, x, y, r) {
     this.__f = f;
+    this.__f.figure = this;
     this.__x = x || 0;
     this.__y = y || 0;
     this.__r = r || Rotation.right;
@@ -68,24 +117,24 @@ class Coati {
     }
 
     // Edit vars
-    if (this.__r === Rotation.front) {
+    if (this.__r == Rotation.front) {
       coords.y ++;
-    } else if (this.__r === Rotation.back) {
+    } else if (this.__r == Rotation.back) {
       coords.y --;
-    } else if (this.__r === Rotation.left) {
+    } else if (this.__r == Rotation.left) {
       coords.x ++;
-    } else if (this.__r === Rotation.right) {
+    } else if (this.__r == Rotation.right) {
       coords.x --;
     }
 
     // Check World end
     if (coords.y < 0) {
-      coords.y = this.__f.height;
-    } else if (coords.y > this.__f.height) {
+      coords.y = this.__f.height - 1;
+    } else if (coords.y >= this.__f.height) {
       coords.y = 0;
     } else if (coords.x < 0) {
-      coords.x = this.__f.width;
-    } else if (coords.x > this.__f.width) {
+      coords.x = this.__f.width - 1;
+    } else if (coords.x >= this.__f.width) {
       coords.x = 0;
     }
 
@@ -106,25 +155,19 @@ class Coati {
 
   move() {
     var coords = this.__front();
-    this.x = coords.x;
-    this.y = coords.y;
+    this.__x = coords.x;
+    this.__y = coords.y;
   }
 
   turnLeft() {
-    // Change var
     this.__r --;
-
-    // Check overflow
     if (this.__r < 0) {
       this.__r = 3;
     }
   }
 
   turnRight() {
-    // Change var
     this.__r ++;
-
-    // Check overflow
     if (this.__r > 3) {
       this.__r = 0;
     }
@@ -163,16 +206,23 @@ class Coati {
   }
 }
 
-var field = new Field()
-var coati = new Coati(window.field);
-window.pycoati = new Proxy(coati, {
-  get: () => {
-    this.__f.update();
-  },
-  set: () => {
-    this.__f.update();
+
+window.speed = 1000;
+window.field = new Field("#output", 10, 10)
+window.coati = new Coati(window.field);
+window.queue = [];
+function saveState() {
+  window.queue.push([window.field.update, [window.field, structuredClone({coati:window.coati, field:window.field})]]);
+}
+setInterval(function() {
+  console.log(window.queue)
+  if (window.queue.length > 0) {
+    d = window.queue.shift();
+    d[0](...d[1]);
   }
-});
+}, window.speed)
+
+//window.pycoati = coati;
 
 var pyodide = null;
 
@@ -180,15 +230,12 @@ async function main() {
   pyodide = await loadPyodide();
   pyodide.FS.create("coati.py");
   pyodide.FS.writeFile("coati.py", (await (await window.fetch("coati.py")).text()));
-  while (true) {
-    alert(
-      pyodide.runPython(
-        prompt("Run Python:")
-      )
-    );
-  }
+  $("#run").css("display", "block");
+  $("#norun").css("display", "none");
 }
 $(() => {
+  main()
+
   $("#input").keydown(() => {
     if ((event.which || event.keyCode) == 9) {
       var $input = $("#input");
@@ -219,7 +266,15 @@ $(() => {
   $("#input").val(localStorage.getItem("coatiCode"))
 
 
-  $("#menu").click(() => {
+  $("#title").click(() => {
     alert("Menu not built.")
+  })
+
+  $("#run").click(() => {
+    try {
+      pyodide.runPython($("#input").val())
+    } catch (e) {
+      alert(e)
+    }
   })
 })
