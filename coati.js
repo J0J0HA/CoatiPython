@@ -421,7 +421,7 @@ $(() => {
   })
 
   if (!localStorage.getItem("coatiCode")) {
-    localStorage.setItem("coatiCode", "import coati\n\nwhile not coati.treeFront():\n    coati.move()")
+    localStorage.setItem("coatiCode", "import coati\n\n# To see a list of functions availible, go to https://github.com/J0J0HA/CoatiWeb/blob/main/README.md\n\nwhile not coati.treeFront():\n    coati.move()")
   }
 
   $("#input").val(localStorage.getItem("coatiCode"))
