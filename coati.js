@@ -40,7 +40,6 @@ function sleep(ms) {
 
 
 
-
 const Item = {
   figure: 0,
   leaf: 1,
@@ -57,12 +56,12 @@ const Rotation = {
 }
 
 class Field {
-  constructor(id, width, height) {
+  constructor(id, width, height, maps) {
     this.width = width;
     this.height = height;
     this.figure = null;
     this.id = id;
-    this.maps = {
+    this.maps = maps || {
       trees: [
         [false, false, false, false, false, false, false, false, false, false],
         [false, false, false, false, false, false, false, false, false, false],
@@ -146,18 +145,22 @@ class Field {
     th.render_clear();
     for (var y = 0; y < 10; y++) {
       for (var x = 0; x < 10; x++) {
-        if (th.maps.trees[x][y]) {
+        if (obj.field.maps.trees[x][y]) {
           th.render_show(Item.tree, x, y, 0)
         }
-        if (th.maps.mushrooms[x][y]) {
+        if (obj.field.maps.mushrooms[x][y]) {
           th.render_show(Item.mushroom, x, y, 0)
         }
-        if (th.maps.leafs[x][y]) {
+        if (obj.field.maps.leafs[x][y]) {
           th.render_show(Item.leaf, x, y, 0)
         }
       }
     }
     th.render_show(Item.figure, obj.coati.__x, obj.coati.__y, obj.coati.__r);
+
+    // this.onupdate(this);
+    // need to filter saveState() to only save important values
+    localStorage.setItem("coatiField", JSON.stringify({maps:th.maps,figure:{x:th.figure.__x,y:th.figure.__y,r:th.figure.__r}}))
   }
 
   cset(x, y, i) {
@@ -184,9 +187,7 @@ class Field {
       this.maps.mushrooms[x][y] = false;
     }
 
-    console.log(x, y, i)
-
-    this.update(this, {coati: window.coati})
+    this.update(this, {coati: window.coati, field: window.field})
   }
 }
 
@@ -199,10 +200,10 @@ class Coati {
     this.__r = r || Rotation.front;
   }
 
-  __front() {
+  __front(x, y) {
     var coords = {
-      x: this.__x,
-      y: this.__y
+      x: x || this.__x,
+      y: y || this.__y
     }
 
     // Edit vars
@@ -244,6 +245,18 @@ class Coati {
 
   move() {
     var coords = this.__front();
+    if (this.__f.maps.trees[coords.x][coords.y]) {
+      throw new Error("Can't move! There is a stone in the way!");
+    }
+    if (this.__f.maps.mushrooms[coords.x][coords.y]) {
+      var mushcoords = this.__front(coords.x, coords.y);
+      if (this.__f.maps.mushrooms[mushcoords.x][mushcoords.y]) {
+        throw new Error("Can't move multiple balls at the same time!");
+      }
+      this.__f.maps.mushrooms[coords.x][coords.y] = false;
+      this.__f.maps.mushrooms[mushcoords.x][mushcoords.y] = true;
+      this.__f.maps.trees[mushcoords.x][mushcoords.y] = false;
+    }
     this.__x = coords.x;
     this.__y = coords.y;
   }
@@ -262,55 +275,72 @@ class Coati {
     }
   }
 
-  putLeaf() {
-    this.__f.setLeaf(this.__x, this.__y);
+  putWorm() {
+    if (this.onWorm()) {
+      throw new Error("There is already a Worm")
+    }
+    this.__f.maps.leafs[this.__x][this.__y] = true;
   }
 
-  removeLeaf() {
-    this.__f.delLeaf(this.__x, this.__y);
+  removeWorm() {
+    if (!this.onWorm()) {
+      throw new Error("No Worm to remove")
+    }
+    this.__f.maps.leafs[this.__x][this.__y] = false;
   }
 
-  onLeaf() {
-    return this.__f.getLeaf(this.__x, this.__y);
+  onWorm() {
+    return this.__f.maps.leafs[this.__x][this.__y];
   }
 
-  mushroomFront() {
+  ballFront() {
     var coords = this.__front();
-    return this.__f.getLeaf(coords.x, coords.y);
+    return this.__f.maps.mushrooms[coords.x][coords.y];
   }
 
-  treeFront() {
+  stoneFront() {
     var coords = this.__front();
-    return this.__f.getTree(coords.x, coords.y);
+    return this.__f.maps.trees[coords.x][coords.y];
   }
 
-  treeLeft() {
+  stoneLeft() {
     var coords = this.__left();
-    return this.__f.getLeaf(coords.x, coords.y);
+    return this.__f.maps.trees[coords.x][coords.y];
   }
 
-  treeRight() {
+  stoneRight() {
     var coords = this.__right();
-    return this.__f.getLeaf(coords.x, coords.y);
+    return this.__f.maps.trees[coords.x][coords.y];
   }
 }
 
 
-window.speed = 1000;
-window.field = new Field("#output", 10, 10)
+window.speed = 250;
+window.field = new Field("#output", 10, 10, JSON.parse(localStorage.getItem("coatiField"))?.maps)
 window.coati = new Coati(window.field);
+if (JSON.parse(localStorage.getItem("coatiField"))?.figure) {
+  p = JSON.parse(localStorage.getItem("coatiField")).figure
+  window.coati.__x = p.x;
+  window.coati.__y = p.y;
+  window.coati.__r = p.r;
+}
 window.uiclick = "";
+window.pressed = false;
 window.queue = [];
 function saveState() {
   window.queue.push([window.field.update, [window.field, structuredClone({coati:window.coati, field:window.field})]]);
 }
-setInterval(function() {
-  console.log(window.queue)
+function applyUpdate() {
   if (window.queue.length > 0) {
     d = window.queue.shift();
     d[0](...d[1]);
   }
-}, window.speed)
+  setTimeout(applyUpdate, window.speed);
+}
+function ealert(e) {
+  alert("Failed!\n\n" + e)
+}
+applyUpdate();
 
 //window.pycoati = coati;
 
@@ -325,7 +355,8 @@ async function main() {
   $(".itembar").draggable({
     cancel: ".itemimg",
     axis: "y",
-    scroll: false
+    scroll: false,
+    containment: "body"
   });
   /*$(".itemimg").draggable({
     scroll: false,
@@ -334,16 +365,22 @@ async function main() {
   });*/
   $(".itemimg").click(function() {
     var $this = $(this);
-    $(".itemimg").removeClass("selected");
     if (!$this.hasClass("selected")) {
+      $(".itemimg").removeClass("selected");
       $this.addClass("selected");
       window.uiclick = $this.attr("data-set");
     } else {
+      $(".itemimg").removeClass("selected");
       window.uiclick = "";
     }
   })
   $("td").click(function() {
     window.field.cset($(this).attr("x"), $(this).attr("y"), eval(window.uiclick));
+  })
+  $("td").hover(function() {
+    if (window.pressed) {
+      window.field.cset($(this).attr("x"), $(this).attr("y"), eval(window.uiclick));
+    }
   })
 }
 $(() => {
@@ -391,18 +428,27 @@ $(() => {
 
 
   $("#title").click(() => {
-    alert("Menu not built.")
+    alert("Later you'll be given options to import, export and reset the map and the code.")
   })
 
   $("#run").click(() => {
     try {
       pyodide.runPython($("#input").val())
     } catch (e) {
-      alert(e)
+      window.queue.push([ealert, [e]])
     }
   })
 
   $(".itembar").disableSelection();
   $(".itemimg").disableSelection();
   $(".vhandle").disableSelection();
+
+  window.field.update(window.field, {coati: window.coati, field: window.field});
+
+  $("body").mouseup(function() {
+    window.pressed = false;
+  })
+  $("body").mousedown(function() {
+    window.pressed = true;
+  })
 })
