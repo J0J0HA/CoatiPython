@@ -46,13 +46,14 @@ const Item = {
   leaf: 1,
   mushroom: 2,
   tree: 3,
+  delete: 4
 }
 
 const Rotation = {
   front: 0,
-  right: 1,
+  left: 1,
   back: 2,
-  left: 3,
+  right: 3,
 }
 
 class Field {
@@ -61,6 +62,44 @@ class Field {
     this.height = height;
     this.figure = null;
     this.id = id;
+    this.maps = {
+      trees: [
+        [false, false, false, false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false, false, false]
+      ],
+      mushrooms: [
+        [false, false, false, false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false, false, false]
+      ],
+      leafs: [
+        [false, false, false, false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false, false, false],
+        [false, false, false, false, false, false, false, false, false, false]
+      ]
+    };
   }
 
   render_get(x, y) {
@@ -70,7 +109,14 @@ class Field {
   render_clear() {
     for (var y = 0; y <= this.height; y++) {
       for (var x = 0; x <= this.width; x++) {
-        this.render_get(x, y).attr("class", "")
+        this.render_get(x, y).removeClass('imgu-0')
+        this.render_get(x, y).removeClass('imgu-1')
+        this.render_get(x, y).removeClass('imgu-2')
+        this.render_get(x, y).removeClass('imgu-3')
+        this.render_get(x, y).removeClass('imgr-0')
+        this.render_get(x, y).removeClass('imgr-1')
+        this.render_get(x, y).removeClass('imgr-2')
+        this.render_get(x, y).removeClass('imgr-3')
       }
     }
   }
@@ -92,12 +138,55 @@ class Field {
       throw new Error("y is out of bounds: " + y.toString());
     }
 
-    this.render_get(x, y).attr("class", "img-"+i+"-"+r);
+    this.render_get(x, y).addClass('imgu-' + i);
+    this.render_get(x, y).addClass('imgr-' + r);
   }
 
   update(th, obj) {
     th.render_clear();
+    for (var y = 0; y < 10; y++) {
+      for (var x = 0; x < 10; x++) {
+        if (th.maps.trees[x][y]) {
+          th.render_show(Item.tree, x, y, 0)
+        }
+        if (th.maps.mushrooms[x][y]) {
+          th.render_show(Item.mushroom, x, y, 0)
+        }
+        if (th.maps.leafs[x][y]) {
+          th.render_show(Item.leaf, x, y, 0)
+        }
+      }
+    }
     th.render_show(Item.figure, obj.coati.__x, obj.coati.__y, obj.coati.__r);
+  }
+
+  cset(x, y, i) {
+    if (x < 0 || x > this.width) {
+      throw new Error("x is out of bounds: " + x);
+    }
+
+    if (y < 0 || y > this.height) {
+      throw new Error("y is out of bounds: " + y);
+    }
+
+    if (i == Item.figure) {
+      this.figure.__x = x;
+      this.figure.__y = y;
+    } else if (i == Item.leaf) {
+      this.maps.leafs[x][y] = true;
+    } else if (i == Item.mushroom) {
+      this.maps.mushrooms[x][y] = true;
+    } else if (i == Item.tree) {
+      this.maps.trees[x][y] = true;
+    } else if (i == Item.delete) {
+      this.maps.trees[x][y] = false;
+      this.maps.leafs[x][y] = false;
+      this.maps.mushrooms[x][y] = false;
+    }
+
+    console.log(x, y, i)
+
+    this.update(this, {coati: window.coati})
   }
 }
 
@@ -107,7 +196,7 @@ class Coati {
     this.__f.figure = this;
     this.__x = x || 0;
     this.__y = y || 0;
-    this.__r = r || Rotation.right;
+    this.__r = r || Rotation.front;
   }
 
   __front() {
@@ -118,9 +207,9 @@ class Coati {
 
     // Edit vars
     if (this.__r == Rotation.front) {
-      coords.y ++;
-    } else if (this.__r == Rotation.back) {
       coords.y --;
+    } else if (this.__r == Rotation.back) {
+      coords.y ++;
     } else if (this.__r == Rotation.left) {
       coords.x ++;
     } else if (this.__r == Rotation.right) {
@@ -210,6 +299,7 @@ class Coati {
 window.speed = 1000;
 window.field = new Field("#output", 10, 10)
 window.coati = new Coati(window.field);
+window.uiclick = "";
 window.queue = [];
 function saveState() {
   window.queue.push([window.field.update, [window.field, structuredClone({coati:window.coati, field:window.field})]]);
@@ -232,8 +322,42 @@ async function main() {
   pyodide.FS.writeFile("coati.py", (await (await window.fetch("coati.py")).text()));
   $("#run").css("display", "block");
   $("#norun").css("display", "none");
+  $(".itembar").draggable({
+    cancel: ".itemimg",
+    axis: "y",
+    scroll: false
+  });
+  /*$(".itemimg").draggable({
+    scroll: false,
+    revert: true,
+    containment: "body"
+  });*/
+  $(".itemimg").click(function() {
+    var $this = $(this);
+    $(".itemimg").removeClass("selected");
+    if (!$this.hasClass("selected")) {
+      $this.addClass("selected");
+      window.uiclick = $this.attr("data-set");
+    } else {
+      window.uiclick = "";
+    }
+  })
+  $("td").click(function() {
+    window.field.cset($(this).attr("x"), $(this).attr("y"), eval(window.uiclick));
+  })
 }
 $(() => {
+  r = 0;
+  $("tr").each(function() {
+    l = 0;
+    $(this).children().each(function() {
+      $(this).attr("x", l);
+      $(this).attr("y", r);
+      l++;
+    })
+    r++;
+  })
+
   main()
 
   $("#input").keydown(() => {
@@ -277,4 +401,8 @@ $(() => {
       alert(e)
     }
   })
+
+  $(".itembar").disableSelection();
+  $(".itemimg").disableSelection();
+  $(".vhandle").disableSelection();
 })

@@ -63,36 +63,63 @@ html, body {
   white-space: none;
 }
 
-.img-0-0 {
-  background-color: transparent;
-  background-image: url(img-0-0.png);
-  background-size: cover;
+
+.imgu-0 {
+  background-image: url(img-0.png);
 }
-.img-0-1 {
-  background-color: transparent;
-  background-image: url(img-0-1.png);
-  background-size: cover;
+
+.imgu-1 {
+  background-image: url(img-1.png);
 }
-.img-0-2 {
-  background-color: transparent;
-  background-image: url(img-0-2.png);
-  background-size: cover;
+
+.imgu-2 {
+  background-image: url(img-2.png);
 }
-.img-0-3 {
-  background-color: transparent;
-  background-image: url(img-0-3.png);
-  background-size: cover;
+
+.imgu-3 {
+  background-image: url(img-3.png);
 }
+
+.imgu-4 {
+  background-image: url(img-4.png);
+}
+
+
+.imgu-0.imgu-1 {
+  background-image: url(img-0+1.png);
+}
+
+.imgu-2.imgu-1 {
+  background-image: url(img-2+1.png);
+}
+
+
+.imgr-0 {
+  transform: rotate(0deg);
+}
+
+.imgr-1 {
+  transform: rotate(90deg);
+}
+
+.imgr-2 {
+  transform: rotate(180deg);
+}
+
+.imgr-3 {
+  transform: rotate(270deg);
+}
+
 
 .title {
   text-align: center;
 }
 
 table {
-  width: min(49vw, calc(99vh - 50px));
-  height: min(49vw, calc(99vh - 50px));
-  min-width: 200px;
-  min-height: 200px;
+  width: min(calc(49vw - 77px), calc(99vh - 50px));
+  height: min(calc(49vw - 77px), calc(99vh - 50px));
+  min-width: 130px;
+  min-height: 130px;
 }
 
 tr {
@@ -100,7 +127,7 @@ tr {
   height: 5vmin;
 }
 
-td {
+td, .img {
   width: 5vmin;
   height: 5vmin;
   max-width: 5vmin;
@@ -108,20 +135,48 @@ td {
   min-width: 5vmin;
   min-height: 5vmin;
   background-color: #343c47;
+  background-size: cover;
 }
 
-@media screen and (max-width: 600px) {
-  body {
-    overflow: scroll;
-  }
-  .container {
-    flex-direction: column;
-  }
-  .left,
-  .right {
-    width: 100vw;
-  }
-  .content {
-    width: 100vw;
-  }
+.ibg {
+  background-color: inherit;
+}
+
+.itemimg {
+  width: 40px;
+  height: 40px;
+  max-width: 40px;
+  max-height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  background-size: cover;
+  border-radius: 5px;
+  display: inline-block;
+  cursor: pointer;
+  z-index: 999;
+}
+
+.itemimg.selected {
+  background-color: #343c47;
+}
+
+.itembar {
+  padding: 10px;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-size: cover;
+  height: 40px;
+  width: 260px;
+  background-color: #2A313B;
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
+  cursor: move;
+}
+
+.vhandle {
+  position: absolute;
+  right: 20px;
+  top: 35%;
+  display: inline-block;
 }
