@@ -1,2 +1,3 @@
+[![CodeQL](https://github.com/J0J0HA/CoatiPython/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/J0J0HA/CoatiPython/actions/workflows/codeql-analysis.yml)
 # CoatiWeb
 Here will be some usefull information...
