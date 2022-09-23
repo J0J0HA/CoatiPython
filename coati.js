@@ -379,7 +379,6 @@ function applyUpdate() {
     window.running = false;
     $("#skip").css("display", "none");
   }
-  console.log(window.qcd)
   setTimeout(applyUpdate, window.speed);
 }
 function ealert(e) {
@@ -507,7 +506,6 @@ async function main() {
     } else if (window.scroll_position > 4) {
       window.scroll_position = -1;
     }
-    console.log(window.scroll_position)
     if (window.scroll_position == -1) {
       $(".itemimg").removeClass("selected");
       window.uiclick = "Item.nothing";
