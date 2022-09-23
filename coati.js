@@ -264,12 +264,14 @@ class Coati {
     this.turnLeft();
     var coords = this.__front();
     this.turnRight();
+    return coords;
   }
 
   __right() {
     this.turnRight();
     var coords = this.__front();
     this.turnLeft();
+    return coords;
   }
 
   move() {
@@ -443,6 +445,9 @@ async function main() {
     window.scroll_position = imguclass;
   })
   $("td").click(function() {
+    if (window.running) {
+      alert("You can't edit the map while the program is running.");
+    }
     window.field.cset($(this).attr("x"), $(this).attr("y"), eval(window.uiclick));
   })
   $("td").on("mousedown", function (e1) {
@@ -468,6 +473,9 @@ async function main() {
     });
   });
   $("td").contextmenu(function() {
+    if (window.running) {
+      alert("You can't edit the map while the program is running.");
+    }
     if ($(this).hasClass("imgu-0")) {
       window.coati.turnRight();
     }
@@ -476,8 +484,14 @@ async function main() {
   })
   $("td").hover(function() {
     if (window.left_pressed) {
+      if (window.running) {
+        alert("You can't edit the map while the program is running.");
+      }
       window.field.cset($(this).attr("x"), $(this).attr("y"), eval(window.uiclick));
     } else if (window.right_pressed) {
+      if (window.running) {
+        alert("You can't edit the map while the program is running.");
+      }
       window.field.cset($(this).attr("x"), $(this).attr("y"), Item.delete);
     }
   })
