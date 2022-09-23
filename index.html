@@ -8,18 +8,29 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
     <script src="https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js"></script>
     <script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.6.0/build/highlight.min.js"></script>
+    <script src="FileSaver.js"></script>
     <script src="coati.js"></script>
     <script>hljs.highlightAll();</script>
     <title>CoatiPython</title>
   </head>
   <body>
+    <input id="upload" type="file" accept=".coati">
     <div id="header">
       <span id="title"><span id="menu">≡</span> CoatiPython</span>
+      <div id="sidebar">
+        <ul>
+          <li id="close-menu">✖ CoatiPython</li>
+          <li id="export-file">⤓ Export</li>
+          <li id="import-file">⤒ Import</li>
+          <li id="reset-map">↺ Reset Map</li>
+          <li id="clear-map">⎚ Clear Map</li>
+        </ul>
+      </div>
     </div>
     <div class="container">
       <div class="left">
-        <span id="run">▶</span>
-        <span id="norun">🗘</span>
+        <span id="run">🗘</span>
+        <span id="skip">&ggg;</span>
         <textarea id="input" value="import coati\n\ncoati.move()"></textarea>
       </div>
       <div class="right">
@@ -58,9 +69,9 @@
       </div>
       <div class="itembar">
           <div class="ibg itemimg imgu-0" data-set="Item.figure"></div>
-          <div class="ibg itemimg imgu-1" data-set="Item.leaf"></div>
-          <div class="ibg itemimg imgu-2" data-set="Item.mushroom"></div>
-          <div class="ibg itemimg imgu-3" data-set="Item.tree"></div>
+          <div class="ibg itemimg imgu-1" data-set="Item.worm"></div>
+          <div class="ibg itemimg imgu-2" data-set="Item.ball"></div>
+          <div class="ibg itemimg imgu-3" data-set="Item.stone"></div>
           <div class="ibg itemimg imgu-4" data-set="Item.delete"></div>
           <div class="ibg vhandle">&#8597;</div>
       </div>

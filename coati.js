@@ -41,10 +41,11 @@ function sleep(ms) {
 
 
 const Item = {
+  nothing: -1,
   figure: 0,
-  leaf: 1,
-  mushroom: 2,
-  tree: 3,
+  worm: 1,
+  ball: 2,
+  stone: 3,
   delete: 4
 }
 
@@ -56,13 +57,15 @@ const Rotation = {
 }
 
 class Field {
-  constructor(id, width, height, maps) {
+  constructor(id, width, height, onupdate) {
     this.width = width;
     this.height = height;
     this.figure = null;
     this.id = id;
-    this.maps = maps || {
-      trees: [
+    this.onupdate = onupdate || (()=>{});
+    this.shownState = {};
+    this.maps = {
+      stones: [
         [false, false, false, false, false, false, false, false, false, false],
         [false, false, false, false, false, false, false, false, false, false],
         [false, false, false, false, false, false, false, false, false, false],
@@ -74,7 +77,7 @@ class Field {
         [false, false, false, false, false, false, false, false, false, false],
         [false, false, false, false, false, false, false, false, false, false]
       ],
-      mushrooms: [
+      balls: [
         [false, false, false, false, false, false, false, false, false, false],
         [false, false, false, false, false, false, false, false, false, false],
         [false, false, false, false, false, false, false, false, false, false],
@@ -86,7 +89,7 @@ class Field {
         [false, false, false, false, false, false, false, false, false, false],
         [false, false, false, false, false, false, false, false, false, false]
       ],
-      leafs: [
+      worms: [
         [false, false, false, false, false, false, false, false, false, false],
         [false, false, false, false, false, false, false, false, false, false],
         [false, false, false, false, false, false, false, false, false, false],
@@ -141,26 +144,36 @@ class Field {
     this.render_get(x, y).addClass('imgr-' + r);
   }
 
+  setMap(map) {
+    this.figure.__x = map.figure.x;
+    this.figure.__y = map.figure.y;
+    this.figure.__r = map.figure.r;
+    this.maps = {
+      stones: map.stones,
+      balls: map.balls,
+      worms: map.worms
+    };
+  }
+
   update(th, obj) {
+    th.shownState = obj;
     th.render_clear();
     for (var y = 0; y < 10; y++) {
       for (var x = 0; x < 10; x++) {
-        if (obj.field.maps.trees[x][y]) {
-          th.render_show(Item.tree, x, y, 0)
+        if (obj.stones[x][y]) {
+          th.render_show(Item.stone, x, y, 0)
         }
-        if (obj.field.maps.mushrooms[x][y]) {
-          th.render_show(Item.mushroom, x, y, 0)
+        if (obj.balls[x][y]) {
+          th.render_show(Item.ball, x, y, 0)
         }
-        if (obj.field.maps.leafs[x][y]) {
-          th.render_show(Item.leaf, x, y, 0)
+        if (obj.worms[x][y]) {
+          th.render_show(Item.worm, x, y, 0)
         }
       }
     }
-    th.render_show(Item.figure, obj.coati.__x, obj.coati.__y, obj.coati.__r);
+    th.render_show(Item.figure, obj.figure.x, obj.figure.y, obj.figure.r);
 
-    // this.onupdate(this);
-    // need to filter saveState() to only save important values
-    localStorage.setItem("coatiField", JSON.stringify({maps:th.maps,figure:{x:th.figure.__x,y:th.figure.__y,r:th.figure.__r}}))
+    th.onupdate(th);
   }
 
   cset(x, y, i) {
@@ -173,21 +186,37 @@ class Field {
     }
 
     if (i == Item.figure) {
-      this.figure.__x = x;
-      this.figure.__y = y;
-    } else if (i == Item.leaf) {
-      this.maps.leafs[x][y] = true;
-    } else if (i == Item.mushroom) {
-      this.maps.mushrooms[x][y] = true;
-    } else if (i == Item.tree) {
-      this.maps.trees[x][y] = true;
+      if (!(this.maps.stones[x][y] || this.maps.balls[x][y])) {
+        this.figure.__x = x;
+        this.figure.__y = y;
+      }
+    } else if (i == Item.worm) {
+      if (!this.maps.stones[x][y]) {
+        this.maps.worms[x][y] = true;
+      }
+    } else if (i == Item.ball) {
+      if (!this.maps.stones[x][y]) {
+        if (!(x == this.figure.__x && y == this.figure.__y)) {
+          this.maps.balls[x][y] = true;
+        }
+      }
+    } else if (i == Item.stone) {
+      if (!(this.maps.worms[x][y] || this.maps.balls[x][y])) {
+        if (!(x == this.figure.__x && y == this.figure.__y)) {
+          this.maps.stones[x][y] = true;
+        }
+      }
     } else if (i == Item.delete) {
-      this.maps.trees[x][y] = false;
-      this.maps.leafs[x][y] = false;
-      this.maps.mushrooms[x][y] = false;
+      this.maps.stones[x][y] = false;
+      this.maps.worms[x][y] = false;
+      this.maps.balls[x][y] = false;
+    } else if (i == Item.nothing) {
+
+    } else {
+      throw new Error("Could not cset! Item does not exist: " + i);
     }
 
-    this.update(this, {coati: window.coati, field: window.field})
+    this.update(this, getMapAndCode())
   }
 }
 
@@ -245,17 +274,17 @@ class Coati {
 
   move() {
     var coords = this.__front();
-    if (this.__f.maps.trees[coords.x][coords.y]) {
+    if (this.__f.maps.stones[coords.x][coords.y]) {
       throw new Error("Can't move! There is a stone in the way!");
     }
-    if (this.__f.maps.mushrooms[coords.x][coords.y]) {
+    if (this.__f.maps.balls[coords.x][coords.y]) {
       var mushcoords = this.__front(coords.x, coords.y);
-      if (this.__f.maps.mushrooms[mushcoords.x][mushcoords.y]) {
+      if (this.__f.maps.balls[mushcoords.x][mushcoords.y]) {
         throw new Error("Can't move multiple balls at the same time!");
       }
-      this.__f.maps.mushrooms[coords.x][coords.y] = false;
-      this.__f.maps.mushrooms[mushcoords.x][mushcoords.y] = true;
-      this.__f.maps.trees[mushcoords.x][mushcoords.y] = false;
+      this.__f.maps.balls[coords.x][coords.y] = false;
+      this.__f.maps.balls[mushcoords.x][mushcoords.y] = true;
+      this.__f.maps.stones[mushcoords.x][mushcoords.y] = false;
     }
     this.__x = coords.x;
     this.__y = coords.y;
@@ -279,68 +308,96 @@ class Coati {
     if (this.onWorm()) {
       throw new Error("There is already a Worm")
     }
-    this.__f.maps.leafs[this.__x][this.__y] = true;
+    this.__f.maps.worms[this.__x][this.__y] = true;
   }
 
   removeWorm() {
     if (!this.onWorm()) {
       throw new Error("No Worm to remove")
     }
-    this.__f.maps.leafs[this.__x][this.__y] = false;
+    this.__f.maps.worms[this.__x][this.__y] = false;
   }
 
   onWorm() {
-    return this.__f.maps.leafs[this.__x][this.__y];
+    return this.__f.maps.worms[this.__x][this.__y];
   }
 
   ballFront() {
     var coords = this.__front();
-    return this.__f.maps.mushrooms[coords.x][coords.y];
+    return this.__f.maps.balls[coords.x][coords.y];
   }
 
   stoneFront() {
     var coords = this.__front();
-    return this.__f.maps.trees[coords.x][coords.y];
+    return this.__f.maps.stones[coords.x][coords.y];
   }
 
   stoneLeft() {
     var coords = this.__left();
-    return this.__f.maps.trees[coords.x][coords.y];
+    return this.__f.maps.stones[coords.x][coords.y];
   }
 
   stoneRight() {
     var coords = this.__right();
-    return this.__f.maps.trees[coords.x][coords.y];
+    return this.__f.maps.stones[coords.x][coords.y];
   }
 }
 
-
+var __savedMap = JSON.parse(localStorage.getItem("coatiField"));
 window.speed = 250;
-window.field = new Field("#output", 10, 10, JSON.parse(localStorage.getItem("coatiField"))?.maps)
-window.coati = new Coati(window.field);
-if (JSON.parse(localStorage.getItem("coatiField"))?.figure) {
-  p = JSON.parse(localStorage.getItem("coatiField")).figure
-  window.coati.__x = p.x;
-  window.coati.__y = p.y;
-  window.coati.__r = p.r;
+function saveMap() {
+  localStorage.setItem("coatiField", JSON.stringify(getMapAndCode()))
 }
-window.uiclick = "";
-window.pressed = false;
+window.field = new Field("#output", 10, 10, saveMap);
+window.field.onupdate = saveMap
+window.coati = new Coati(window.field);
+if (__savedMap) {
+  window.field.setMap(__savedMap);
+}
+
+window.uiclick = "Item.nothing";
+window.left_pressed = false;
+window.right_pressed = false;
+window.scroll_position = -1;
 window.queue = [];
 function saveState() {
-  window.queue.push([window.field.update, [window.field, structuredClone({coati:window.coati, field:window.field})]]);
+  window.queue.push([window.field.update, [window.field, getMapAndCode()]]);
 }
+window.qcd = 2;
 function applyUpdate() {
   if (window.queue.length > 0) {
+    window.qcd = 2;
     d = window.queue.shift();
     d[0](...d[1]);
+  } else if (window.queue.length == 0) {
+    window.qcd --;
   }
+  if (window.qcd == 0) {
+    $("#run").text("▶");
+    window.running = false;
+    $("#skip").css("display", "none");
+  }
+  console.log(window.qcd)
   setTimeout(applyUpdate, window.speed);
 }
 function ealert(e) {
   alert("Failed!\n\n" + e)
 }
 applyUpdate();
+
+function getMapAndCode() {
+  return structuredClone({
+    figure: {
+      x: window.coati.__x,
+      y: window.coati.__y,
+      r: window.coati.__r
+    },
+    stones: window.field.maps.stones,
+    balls: window.field.maps.balls,
+    worms: window.field.maps.worms,
+    code: $("#input").val()
+  });
+}
 
 //window.pycoati = coati;
 
@@ -350,8 +407,8 @@ async function main() {
   pyodide = await loadPyodide();
   pyodide.FS.create("coati.py");
   pyodide.FS.writeFile("coati.py", (await (await window.fetch("coati.py")).text()));
-  $("#run").css("display", "block");
-  $("#norun").css("display", "none");
+  $("#run").text("▶")
+  $("#loading").css("display", "none");
   $(".itembar").draggable({
     cancel: ".itemimg",
     axis: "y",
@@ -371,16 +428,111 @@ async function main() {
       window.uiclick = $this.attr("data-set");
     } else {
       $(".itemimg").removeClass("selected");
-      window.uiclick = "";
+      window.uiclick = "Item.nothing";
     }
+    var imguclass = "4";
+    if ($this.hasClass("imgu-0")) {
+      imguclass = 0;
+    } else if ($this.hasClass("imgu-1")) {
+      imguclass = 1;
+    } else if ($this.hasClass("imgu-2")) {
+      imguclass = 2;
+    } else if ($this.hasClass("imgu-3")) {
+      imguclass = 3;
+    }
+    window.scroll_position = imguclass;
   })
   $("td").click(function() {
     window.field.cset($(this).attr("x"), $(this).attr("y"), eval(window.uiclick));
   })
-  $("td").hover(function() {
-    if (window.pressed) {
-      window.field.cset($(this).attr("x"), $(this).attr("y"), eval(window.uiclick));
+  $("td").on("mousedown", function (e1) {
+    $("td").one("mouseup", function (e2) {
+      if (e1.which == 2 && e1.target == e2.target) {
+        var $this = $(this);
+        var imguclass = "-1";
+        if ($this.hasClass("imgu-0")) {
+          imguclass = "0";
+        } else if ($this.hasClass("imgu-1")) {
+          imguclass = "1";
+        } else if ($this.hasClass("imgu-2")) {
+          imguclass = "2";
+        } else if ($this.hasClass("imgu-3")) {
+          imguclass = "3";
+        }
+        if (imguclass == "-1") {
+          $(".itemimg").removeClass("selected");
+        } else {
+          $(".itemimg.imgu-" + imguclass).click();
+        }
+      }
+    });
+  });
+  $("td").contextmenu(function() {
+    if ($(this).hasClass("imgu-0")) {
+      window.coati.turnRight();
     }
+    window.field.cset($(this).attr("x"), $(this).attr("y"), Item.delete);
+    event.preventDefault();
+  })
+  $("td").hover(function() {
+    if (window.left_pressed) {
+      window.field.cset($(this).attr("x"), $(this).attr("y"), eval(window.uiclick));
+    } else if (window.right_pressed) {
+      window.field.cset($(this).attr("x"), $(this).attr("y"), Item.delete);
+    }
+  })
+  $(".right").on('DOMMouseScroll', function(event) {
+    if (event.originalEvent.detail >= 0) {
+      window.scroll_position ++;
+    }
+    else {
+      window.scroll_position --;
+    }
+    if (window.scroll_position < -1) {
+      window.scroll_position = 4;
+    } else if (window.scroll_position > 4) {
+      window.scroll_position = -1;
+    }
+    console.log(window.scroll_position)
+    if (window.scroll_position == -1) {
+      $(".itemimg").removeClass("selected");
+      window.uiclick = "Item.nothing";
+    } else {
+      $(".itemimg.imgu-" + window.scroll_position).click();
+    }
+  })
+
+
+  $("#run").click(() => {
+    $("#run").text("⏹")
+    if (window.running) {
+      window.field.update(window.field, window.field.shownState);
+      window.field.maps.stones = d[1][1].stones;
+      window.field.maps.balls = d[1][1].balls;
+      window.field.maps.worms = d[1][1].worms;
+      window.coati.__x = d[1][1].figure.x;
+      window.coati.__y = d[1][1].figure.y;
+      window.coati.__r = d[1][1].figure.r;
+      window.queue.length = 0;
+      $("#run").text("▶");
+      window.running = false;
+      $("#skip").css("display", "none");
+    } else {
+      window.running = true;
+      $("#skip").css("display", "block");
+      try {
+        pyodide.runPython($("#input").val(), {})
+      } catch (e) {
+        window.queue.push([ealert, [e.message]])
+      }
+    }
+  })
+  $("#skip").click(() => {
+    window.field.update(window.field, getMapAndCode());
+    window.queue.length = 0;
+    $("#run").text("▶");
+    window.running = false;
+    $("#skip").css("display", "none");
   })
 }
 $(() => {
@@ -420,35 +572,106 @@ $(() => {
     localStorage.setItem("coatiCode", $("#input").val())
   })
 
-  if (!localStorage.getItem("coatiCode")) {
-    localStorage.setItem("coatiCode", "import coati\n\n# To see a list of functions availible, go to https://github.com/J0J0HA/CoatiWeb/blob/main/README.md\n\nwhile not coati.treeFront():\n    coati.move()")
-  }
-
-  $("#input").val(localStorage.getItem("coatiCode"))
+  $("#input").val(__savedMap?.code || "import coati\n\n# To see a list of functions availible, go to https://github.com/J0J0HA/CoatiWeb/blob/main/README.md\n\nwhile not coati.stoneFront():\n    coati.move()")
 
 
   $("#title").click(() => {
-    alert("Later you'll be given options to import, export and reset the map and the code.")
+    $("#sidebar").addClass("shown")
   })
 
-  $("#run").click(() => {
-    try {
-      pyodide.runPython($("#input").val())
-    } catch (e) {
-      window.queue.push([ealert, [e]])
-    }
-  })
 
   $(".itembar").disableSelection();
   $(".itemimg").disableSelection();
+  $("table").disableSelection();
+  $("#title").disableSelection();
+  $("#sidebar").disableSelection();
   $(".vhandle").disableSelection();
+  $("#run").disableSelection();
+  $("#skip").disableSelection();
 
-  window.field.update(window.field, {coati: window.coati, field: window.field});
+  window.field.update(window.field, getMapAndCode());
 
   $("body").mouseup(function() {
-    window.pressed = false;
+    if (event.which === 1) {
+      window.left_pressed = false;
+    } else if (event.which === 3) {
+      window.right_pressed = false;
+    }
+
+    $("#sidebar").removeClass("shown")
   })
   $("body").mousedown(function() {
-    window.pressed = true;
+    if (event.which === 1) {
+      window.left_pressed = true;
+    } else if (event.which === 3) {
+      window.right_pressed = true;
+    }
+  })
+  $("#export-file").click(function() {
+    var blob = new Blob([JSON.stringify(getMapAndCode())], {type: "text/plain;charset=utf-8"});
+    saveAs(blob, prompt("Name your file:") + ".coati");
+  })
+  $("#import-file").click(function() {
+    $("#upload").css("display", "block");
+    $("#upload").click();
+    $("#upload").css("display", "none");
+  })
+  $("#upload").on('change', async function() {
+    if (confirm("Are you sure you want to upload this project? This will clear your current project.")) {
+      var content = await $("#upload")[0].files[0].text();
+      var backup = JSON.parse(content);
+
+      $("#input").val(backup.code);
+
+      window.field.maps.stones = backup.stones;
+      window.field.maps.balls = backup.balls;
+      window.field.maps.worms = backup.worms;
+
+      window.coati.__x = backup.figure.x;
+      window.coati.__y = backup.figure.y;
+      window.coati.__r = backup.figure.r;
+
+      window.field.update(window.field, getMapAndCode())
+      saveMap();
+      __savedMap = getMapAndCode();
+    }
+  })
+  $("#reset-map").click(function() {
+    if (confirm("Are you sure you want to reset the map? This will clear all your changes made after the last page reload, or since the last import, if you didn't reload the page since then.")) {
+      var backup = __savedMap;
+
+      $("#input").val(backup.code);
+
+      window.field.maps.stones = backup.stones;
+      window.field.maps.balls = backup.balls;
+      window.field.maps.worms = backup.worms;
+
+      window.coati.__x = backup.figure.x;
+      window.coati.__y = backup.figure.y;
+      window.coati.__r = backup.figure.r;
+
+      window.field.update(window.field, getMapAndCode())
+      saveMap();
+      __savedMap = getMapAndCode();
+    }
+  })
+  $("#clear-map").click(function() {
+    if (confirm("Are you sure you want to clear the map? This will delete all contents of map.")) {
+      for (var y = 0; y < 10; y++) {
+        for (var x = 0; x < 10; x++) {
+          window.field.maps.stones[x][y] = false;
+          window.field.maps.balls[x][y] = false;
+          window.field.maps.worms[x][y] = false;
+        }
+      }
+
+      window.coati.__x = 0;
+      window.coati.__y = 0;
+      window.coati.__r = 0;
+
+      window.field.update(window.field, getMapAndCode())
+      saveMap();
+      __savedMap = getMapAndCode();
+    }
   })
 })
