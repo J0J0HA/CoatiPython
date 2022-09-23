@@ -408,6 +408,8 @@ async function main() {
   pyodide = await loadPyodide();
   pyodide.FS.create("coati.py");
   pyodide.FS.writeFile("coati.py", (await (await window.fetch("coati.py")).text()));
+  pyodide.FS.create("kara.py");
+  pyodide.FS.writeFile("kara.py", (await (await window.fetch("kara.py")).text()));
   $("#run").text("▶")
   $("#loading").css("display", "none");
   $(".itembar").draggable({
