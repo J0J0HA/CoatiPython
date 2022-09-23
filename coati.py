@@ -7,13 +7,13 @@ def __jsfunc(func):
         return result
     return __wrapper;
 
-move            = __jsfunc(__js.window.coati.move)
-turnLeft        = __jsfunc(__js.window.coati.turnLeft)
-turnRight       = __jsfunc(__js.window.coati.turnRight)
-putWorm         = __jsfunc(__js.window.coati.putWorm)
-removeWorm      = __jsfunc(__js.window.coati.removeWorm)
-onWorm          = __jsfunc(__js.window.coati.onWorm)
-ballFront       = __jsfunc(__js.window.coati.ballFront)
-stoneFront      = __jsfunc(__js.window.coati.stoneFront)
-stoneLeft       = __jsfunc(__js.window.coati.stoneLeft)
-stoneRight      = __jsfunc(__js.window.coati.stoneRight)
+move             = __jsfunc(__js.window.coati.move)
+turn_left        = __jsfunc(__js.window.coati.turnLeft)
+turn_right       = __jsfunc(__js.window.coati.turnRight)
+put_worm         = __jsfunc(__js.window.coati.putWorm)
+remove_worm      = __jsfunc(__js.window.coati.removeWorm)
+onWorm           = __jsfunc(__js.window.coati.onWorm)
+ball_front       = __jsfunc(__js.window.coati.ballFront)
+stone_front      = __jsfunc(__js.window.coati.stoneFront)
+stone_left       = __jsfunc(__js.window.coati.stoneLeft)
+stone_right      = __jsfunc(__js.window.coati.stoneRight)
