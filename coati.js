@@ -400,7 +400,6 @@ function getMapAndCode() {
   });
 }
 
-//window.pycoati = coati;
 
 var pyodide = null;
 
