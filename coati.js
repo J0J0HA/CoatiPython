@@ -680,6 +680,9 @@ async function main() {
       __savedMap = getMapAndCode();
     }
   })
+  $("#welcome-guide").click(function() {
+    window.location.href = "welcome";
+  })
 }
 $(() => {
   r = 0;
@@ -693,5 +696,19 @@ $(() => {
     r++;
   })
 
-  main()
+  var welcome = localStorage.getItem("welcome");
+  var thd = 1000 * 60 * 60 * 24 * 30;
+  if ((!welcome) || (welcome < Date.now() - thd)) {
+    if (window.location.hash == "#welcome") {
+      window.location.hash = "#";
+      localStorage.setItem("welcome", Date.now());
+    } else if (window.location.hash == "#welcome-again") {
+      window.location.hash = "#";
+      localStorage.setItem("welcome", Date.now() - 1000 * 60 * 60 * 24 * 30);
+    } else {
+      window.location.href = "welcome";
+    }
+  } else {
+    main();
+  }
 })

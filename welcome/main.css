@@ -1,0 +1,16 @@
+body {
+  overflow: hidden;
+  color: #abb2bf;
+  background: #282c34;
+  font-family: Roboto, monospace;
+}
+
+ul {
+  list-style-type: square;
+  list-style-position: outside;
+  padding-left: 20px;
+}
+
+a {
+  color: #6c96e3;
+}
