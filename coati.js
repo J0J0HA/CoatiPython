@@ -699,6 +699,7 @@ $(() => {
   var welcome = localStorage.getItem("welcome");
   var thd = 1000 * 60 * 60 * 24 * 30;
   if ((!welcome) || (welcome < Date.now() - thd)) {
+    return main();
     if (window.location.hash == "#welcome") {
       window.location.hash = "#";
       localStorage.setItem("welcome", Date.now());
