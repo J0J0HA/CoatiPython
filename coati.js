@@ -365,6 +365,15 @@ window.queue = [];
 function saveState() {
   window.queue.push([window.field.update, [window.field, getMapAndCode()]]);
 }
+function updateSpeed() {
+  window.speed = $("#speed").val();
+  if (window.speed == 0) {
+    $("#timespeed").text("immediately");
+  } else {
+    $("#timespeed").text(Math.round(window.speed) / 1000 + "sec/move");
+  }
+}
+setInterval(updateSpeed, 100);
 window.qcd = 2;
 function applyUpdate() {
   if (window.queue.length > 0) {
@@ -377,7 +386,7 @@ function applyUpdate() {
   if (window.qcd == 0) {
     $("#run").text("▶");
     window.running = false;
-    $("#skip").css("display", "none");
+    $("#skip").css("opacity", "0.5");
   }
   setTimeout(applyUpdate, window.speed);
 }
@@ -410,18 +419,12 @@ async function main() {
   pyodide.FS.create("kara.py");
   pyodide.FS.writeFile("kara.py", (await (await window.fetch("kara.py")).text()));
   $("#run").text("▶")
-  $("#loading").css("display", "none");
   $(".itembar").draggable({
     cancel: ".itemimg",
     axis: "y",
     scroll: false,
     containment: "body"
   });
-  /*$(".itemimg").draggable({
-    scroll: false,
-    revert: true,
-    containment: "body"
-  });*/
   $(".itemimg").click(function() {
     var $this = $(this);
     if (!$this.hasClass("selected")) {
@@ -529,10 +532,10 @@ async function main() {
       window.queue.length = 0;
       $("#run").text("▶");
       window.running = false;
-      $("#skip").css("display", "none");
+      $("#skip").css("opacity", "0.5");
     } else {
       window.running = true;
-      $("#skip").css("display", "block");
+      $("#skip").css("opacity", "1");
       try {
         pyodide.runPython($("#input").val(), {})
       } catch (e) {
@@ -541,26 +544,16 @@ async function main() {
     }
   })
   $("#skip").click(() => {
-    window.field.update(window.field, getMapAndCode());
-    window.queue.length = 0;
-    $("#run").text("▶");
-    window.running = false;
-    $("#skip").css("display", "none");
+    if (window.running) {
+      window.field.update(window.field, getMapAndCode());
+      window.queue.length = 0;
+      $("#run").text("▶");
+      window.running = false;
+      $("#skip").css("opacity", "0.5");
+    }
   })
-}
-$(() => {
-  r = 0;
-  $("tr").each(function() {
-    l = 0;
-    $(this).children().each(function() {
-      $(this).attr("x", l);
-      $(this).attr("y", r);
-      l++;
-    })
-    r++;
-  })
-
-  main()
+  $("#speed").change(updateSpeed);
+  $("#speed").val(1000);
 
   $("#input").keydown(() => {
     if ((event.which || event.keyCode) == 9) {
@@ -687,4 +680,18 @@ $(() => {
       __savedMap = getMapAndCode();
     }
   })
+}
+$(() => {
+  r = 0;
+  $("tr").each(function() {
+    l = 0;
+    $(this).children().each(function() {
+      $(this).attr("x", l);
+      $(this).attr("y", r);
+      l++;
+    })
+    r++;
+  })
+
+  main()
 })

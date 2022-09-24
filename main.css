@@ -24,14 +24,20 @@ html, body {
   border: 1px solid #abb2bf;
 }
 
+.left {
+  padding-left: 0px;
+}
+
+
 #input {
-  height: 99%;
-  width: 98.5%;
+  height: calc(98% - 60px);;
+  width: 98%;
   border: none;
   resize: none;
   padding: 5px;
   overflow-x: scroll;
   white-space: pre;
+  margin-left: 5px;
 }
 
 #header {
@@ -40,26 +46,52 @@ html, body {
   font-family: Roboto, monospace;
 }
 
-#run {
-  position: absolute;
-  left: calc(49vw - 50px);
-  height: 60px;
-  cursor: pointer;
-  background-color: transparent;
-  width: 50px;
-  height: 50px;
-  text-align: center;
+#controls {
+  margin: 0px;
+  padding: 0px;
+  height: 40px;
+  width: 100%;
+  padding: 10px;
+  display: inline-block;
+  border-bottom: 1px solid #abb2bf;
 }
-#skip {
-  position: absolute;
-  left: calc(49vw - 15px);
-  height: 60px;
+
+#run {
+  height: 30px;
+  line-height: 30px;
   cursor: pointer;
   background-color: transparent;
-  width: 20px;
-  height: 50px;
+  width: 30px;
   text-align: center;
-  display: none;
+  display: inline-block;
+}
+
+#skip {
+  height: 30px;
+  line-height: 30px;
+  cursor: pointer;
+  background-color: transparent;
+  width: 30px;
+  text-align: center;
+  display: inline-block;
+  opacity: 0.5;
+}
+
+#slider {
+  line-height: 30px;
+  cursor: pointer;
+  background-color: transparent;
+  text-align: center;
+  display: inline-block;
+}
+
+#speed {
+  position: relative;
+  top: 5px;
+  cursor: pointer;
+  background-color: transparent;
+  text-align: center;
+  display: inline-block;
 }
 
 
