@@ -18,4 +18,7 @@ assignees: ''
    - Browser Version: Which browser do you use and which version of it is installed?
    - Additional context/infos: Anything what looks like it could be important.
   Thanks in advance!
+  PS: Anything beetween in here is not shown, so it doesn't matter if you remove this text.
 -->
+
+Write your issue report **HERE**!
