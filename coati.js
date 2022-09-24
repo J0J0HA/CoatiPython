@@ -578,7 +578,7 @@ async function main() {
     localStorage.setItem("coatiCode", $("#input").val())
   })
 
-  $("#input").val(__savedMap?.code || "import coati\n\n# To see a list of functions availible, go to https://github.com/J0J0HA/CoatiWeb/blob/main/README.md\n\nwhile not coati.stoneFront():\n    coati.move()")
+  $("#input").val(__savedMap?.code || "import coati\n\n# To see a list of functions availible,\n# go to https://l.jojojux.de/MTk3Nj\n\nwhile not coati.stoneFront():\n    coati.move()")
 
 
   $("#title").click(() => {
@@ -699,7 +699,7 @@ $(() => {
   var welcome = localStorage.getItem("welcome");
   var thd = 1000 * 60 * 60 * 24 * 30;
   if ((!welcome) || (welcome < Date.now() - thd)) {
-    return main();
+    return main(); /* Automated welcome popup deactived */
     if (window.location.hash == "#welcome") {
       window.location.hash = "#";
       localStorage.setItem("welcome", Date.now());
