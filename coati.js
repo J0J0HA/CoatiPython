@@ -597,7 +597,7 @@ async function main() {
     localStorage.setItem("coatiCode", $("#input").val())
   })
 
-  $("#input").val(__savedMap?.code || "import coati\n\n# To see a list of functions availible,\n# go to https://l.jojojux.de/MTk3Nj\n\nwhile not coati.stoneFront():\n    coati.move()")
+  $("#input").val(__savedMap?.code || "import coati\n\n# To see a list of functions availible,\n# go to https://l.jojojux.de/MTk3Nj\n\nwhile not coati.stone_front():\n    coati.move()")
 
 
   $("#title").click(() => {
