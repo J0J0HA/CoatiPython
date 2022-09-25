@@ -34,6 +34,17 @@ function sleep(ms) {
 }
 
 
+var __root = document.querySelector(':root');
+function get_css_var(name) {
+  var __root_style = getComputedStyle(__root);
+  return __root_style.getPropertyValue(name);
+}
+
+function set_css_var(name, value) {
+  __root.style.setProperty(name, value);
+}
+
+
 
 
 
@@ -50,94 +61,142 @@ const Item = {
 }
 
 const Rotation = {
-  front: 0,
-  left: 1,
-  back: 2,
-  right: 3,
+  front: 3,
+  left: 0,
+  back: 1,
+  right: 2
 }
 
 class Field {
-  constructor(id, width, height, onupdate) {
-    this.width = width;
-    this.height = height;
+  constructor(id, onupdate) {
     this.figure = null;
     this.id = id;
     this.onupdate = onupdate || (()=>{});
     this.shownState = {};
+  }
+
+  resize(size) {
+    this.size = size;
     this.maps = {
-      stones: [
-        [false, false, false, false, false, false, false, false, false, false],
-        [false, false, false, false, false, false, false, false, false, false],
-        [false, false, false, false, false, false, false, false, false, false],
-        [false, false, false, false, false, false, false, false, false, false],
-        [false, false, false, false, false, false, false, false, false, false],
-        [false, false, false, false, false, false, false, false, false, false],
-        [false, false, false, false, false, false, false, false, false, false],
-        [false, false, false, false, false, false, false, false, false, false],
-        [false, false, false, false, false, false, false, false, false, false],
-        [false, false, false, false, false, false, false, false, false, false]
-      ],
-      balls: [
-        [false, false, false, false, false, false, false, false, false, false],
-        [false, false, false, false, false, false, false, false, false, false],
-        [false, false, false, false, false, false, false, false, false, false],
-        [false, false, false, false, false, false, false, false, false, false],
-        [false, false, false, false, false, false, false, false, false, false],
-        [false, false, false, false, false, false, false, false, false, false],
-        [false, false, false, false, false, false, false, false, false, false],
-        [false, false, false, false, false, false, false, false, false, false],
-        [false, false, false, false, false, false, false, false, false, false],
-        [false, false, false, false, false, false, false, false, false, false]
-      ],
-      worms: [
-        [false, false, false, false, false, false, false, false, false, false],
-        [false, false, false, false, false, false, false, false, false, false],
-        [false, false, false, false, false, false, false, false, false, false],
-        [false, false, false, false, false, false, false, false, false, false],
-        [false, false, false, false, false, false, false, false, false, false],
-        [false, false, false, false, false, false, false, false, false, false],
-        [false, false, false, false, false, false, false, false, false, false],
-        [false, false, false, false, false, false, false, false, false, false],
-        [false, false, false, false, false, false, false, false, false, false],
-        [false, false, false, false, false, false, false, false, false, false]
-      ]
+      stones: [],
+      balls: [],
+      worms: []
     };
+    var code = "";
+    for (var x = 0; x < size; x++) {
+      var icode = "";
+      var istones = [];
+      var iballs = [];
+      var iworms = [];
+      for (var y = 0; y < size; y++) {
+        icode += "<td x='" + x + "' y='" + y + "'></td>";
+        istones.push(false);
+        iballs.push(false);
+        iworms.push(false);
+      }
+      this.maps.stones.push(istones);
+      this.maps.balls.push(iballs);
+      this.maps.worms.push(iworms);
+      code += "<tr>" + icode + "</tr>"
+    }
+    $(this.id).html("<tbody>" + code + "</tbody>");
+    set_css_var("--cell-amount", this.size);
+    this.bind_events();
+    this.update(getMapAndCode());
+  }
+
+  bind_events() {
+    $("td").click(function() {
+      if (window.running) {
+        return;
+      }
+      window.field.cset($(this).attr("x"), $(this).attr("y"), eval(window.uiclick));
+    })
+    $("td").on("mousedown", function (e1) {
+      if (window.running) {
+        return alert("You can't edit the map while the program is running.");
+      }
+      $("td").one("mouseup", function (e2) {
+        if (e1.which == 2 && e1.target == e2.target) {
+          var $this = $(this);
+          var imguclass = "-1";
+          if ($this.hasClass("imgu-0")) {
+            imguclass = "0";
+          } else if ($this.hasClass("imgu-1")) {
+            imguclass = "1";
+          } else if ($this.hasClass("imgu-2")) {
+            imguclass = "2";
+          } else if ($this.hasClass("imgu-3")) {
+            imguclass = "3";
+          }
+          if (imguclass == "-1") {
+            $(".itemimg").removeClass("selected");
+          } else {
+            $(".itemimg.imgu-" + imguclass).click();
+          }
+        }
+      });
+    });
+    $("td").contextmenu(function() {
+      if (window.running) {
+        return;
+      }
+      if ($(this).hasClass("imgu-0")) {
+        window.coati.turnRight();
+      }
+      window.field.cset($(this).attr("x"), $(this).attr("y"), Item.delete);
+      event.preventDefault();
+    })
+    $("td").hover(function() {
+      if (window.running) {
+        return;
+      }
+      if (window.left_pressed) {
+        window.field.cset($(this).attr("x"), $(this).attr("y"), eval(window.uiclick));
+      } else if (window.right_pressed) {
+        window.field.cset($(this).attr("x"), $(this).attr("y"), Item.delete);
+      }
+    })
   }
 
   render_get(x, y) {
-    return $($($($(this.id).children()[0]).children()[y]).children()[x]);
+    return $("td[x='" + x + "'][y='" + y + "']");
+  }
+
+  render_clear_cell(x, y) {
+    var cell = this.render_get(x, y);
+    cell.removeClass('imgu-0');
+    cell.removeClass('imgu-1');
+    cell.removeClass('imgu-2');
+    cell.removeClass('imgu-3');
+    cell.removeClass('imgr-1');
+    cell.removeClass('imgr-2');
+    cell.removeClass('imgr-3');
   }
 
   render_clear() {
-    for (var y = 0; y <= this.height; y++) {
-      for (var x = 0; x <= this.width; x++) {
-        this.render_get(x, y).removeClass('imgu-0')
-        this.render_get(x, y).removeClass('imgu-1')
-        this.render_get(x, y).removeClass('imgu-2')
-        this.render_get(x, y).removeClass('imgu-3')
-        this.render_get(x, y).removeClass('imgr-0')
-        this.render_get(x, y).removeClass('imgr-1')
-        this.render_get(x, y).removeClass('imgr-2')
-        this.render_get(x, y).removeClass('imgr-3')
+    for (var y = 0; y <= this.size; y++) {
+      for (var x = 0; x <= this.size; x++) {
+        this.render_clear_cell(x, y);
       }
     }
   }
 
   render_show(i, x, y, r) {
     if (!(i in Object.values(Item))) {
-      throw new Error("No valid Item: " + i.toString());
+      throw new Error("No valid Item: " + i?.toString());
     }
 
     if (!(r in Object.values(Rotation))) {
-      throw new Error("No valid Rotation: " + r.toString());
+      throw new Error("No valid Rotation: " + r?.toString());
     }
 
-    if (x < 0 || x > this.width) {
-      throw new Error("x is out of bounds: " + x.toString());
+    if (x < 0 || x > this.size) {
+      throw new Error("x is out of bounds: " + x?.toString());
     }
 
-    if (y < 0 || y > this.height) {
-      throw new Error("y is out of bounds: " + y.toString());
+    if (y < 0 || y > this.size) {
+      throw new Error("y is out of bounds: " + y?.toString());
     }
 
     this.render_get(x, y).addClass('imgu-' + i);
@@ -145,43 +204,49 @@ class Field {
   }
 
   setMap(map) {
-    this.figure.__x = map.figure.x;
-    this.figure.__y = map.figure.y;
-    this.figure.__r = map.figure.r;
-    this.maps = {
-      stones: map.stones,
-      balls: map.balls,
-      worms: map.worms
-    };
+    this.resize(map.size || 10);
+    this.figure.__x = map.figure.x || 0;
+    this.figure.__y = map.figure.y || 0;
+    this.figure.__r = map.figure.r || 0;
+    if (map.stones && map.balls && map.worms) {
+      this.maps = {
+        stones: map.stones,
+        balls: map.balls,
+        worms: map.worms
+      };
+    }
   }
 
-  update(th, obj) {
-    th.shownState = obj;
-    th.render_clear();
-    for (var y = 0; y < 10; y++) {
-      for (var x = 0; x < 10; x++) {
+  update(obj) {
+    this.shownState = obj;
+    this.render_clear();
+    for (var y = 0; y < this.size; y++) {
+      for (var x = 0; x < this.size; x++) {
         if (obj.stones[x][y]) {
-          th.render_show(Item.stone, x, y, 0)
+          this.render_show(Item.stone, x, y, 0);
         }
         if (obj.balls[x][y]) {
-          th.render_show(Item.ball, x, y, 0)
+          this.render_show(Item.ball, x, y, 0);
         }
         if (obj.worms[x][y]) {
-          th.render_show(Item.worm, x, y, 0)
+          this.render_show(Item.worm, x, y, 0);
+        }
+        if (!(obj.stones[x][y] || obj.balls[x][y] || obj.worms[x][y])) {
+          this.render_clear_cell(x, y);
         }
       }
     }
-    th.render_show(Item.figure, obj.figure.x, obj.figure.y, obj.figure.r);
+    this.render_show(Item.figure, obj.figure.x, obj.figure.y, obj.figure.r);
 
-    th.onupdate(th);
+    this.onupdate();
   }
 
   cset(x, y, i) {
-    if (x < 0 || x > this.width) {
+    if (x < 0 || x > this.size) {
       throw new Error("x is out of bounds: " + x);
     }
 
-    if (y < 0 || y > this.height) {
+    if (y < 0 || y > this.size) {
       throw new Error("y is out of bounds: " + y);
     }
 
@@ -216,7 +281,7 @@ class Field {
       throw new Error("Could not cset! Item does not exist: " + i);
     }
 
-    this.update(this, getMapAndCode())
+    this.update(getMapAndCode())
   }
 }
 
@@ -241,19 +306,19 @@ class Coati {
     } else if (this.__r == Rotation.back) {
       coords.y ++;
     } else if (this.__r == Rotation.left) {
-      coords.x ++;
-    } else if (this.__r == Rotation.right) {
       coords.x --;
+    } else if (this.__r == Rotation.right) {
+      coords.x ++;
     }
 
     // Check World end
     if (coords.y < 0) {
-      coords.y = this.__f.height - 1;
-    } else if (coords.y >= this.__f.height) {
+      coords.y = this.__f.size - 1;
+    } else if (coords.y >= this.__f.size) {
       coords.y = 0;
     } else if (coords.x < 0) {
-      coords.x = this.__f.width - 1;
-    } else if (coords.x >= this.__f.width) {
+      coords.x = this.__f.size - 1;
+    } else if (coords.x >= this.__f.size) {
       coords.x = 0;
     }
 
@@ -345,26 +410,14 @@ class Coati {
   }
 }
 
-var __savedMap = JSON.parse(localStorage.getItem("coatiField"));
-window.speed = 250;
 function saveMap() {
   localStorage.setItem("coatiField", JSON.stringify(getMapAndCode()))
 }
-window.field = new Field("#output", 10, 10, saveMap);
-window.field.onupdate = saveMap
-window.coati = new Coati(window.field);
-if (__savedMap) {
-  window.field.setMap(__savedMap);
+
+function saveState() {
+  window.queue.push(["update", [getMapAndCode()]]);
 }
 
-window.uiclick = "Item.nothing";
-window.left_pressed = false;
-window.right_pressed = false;
-window.scroll_position = -1;
-window.queue = [];
-function saveState() {
-  window.queue.push([window.field.update, [window.field, getMapAndCode()]]);
-}
 function updateSpeed() {
   window.speed = $("#speed").val();
   if (window.speed == 0) {
@@ -373,13 +426,17 @@ function updateSpeed() {
     $("#timespeed").text(Math.round(window.speed) / 1000 + "sec/move");
   }
 }
-setInterval(updateSpeed, 100);
-window.qcd = 2;
+
 function applyUpdate() {
+  var f = {
+    "update": function(a) {
+      window.field.update(a);
+    }
+  }
   if (window.queue.length > 0) {
     window.qcd = 2;
     d = window.queue.shift();
-    d[0](...d[1]);
+    f[d[0]](...d[1]);
   } else if (window.queue.length == 0) {
     window.qcd --;
   }
@@ -390,13 +447,14 @@ function applyUpdate() {
   }
   setTimeout(applyUpdate, window.speed);
 }
+
 function ealert(e) {
   alert("Failed!\n\n" + e)
 }
-applyUpdate();
 
 function getMapAndCode() {
   return structuredClone({
+    size: window.field.size,
     figure: {
       x: window.coati.__x,
       y: window.coati.__y,
@@ -410,14 +468,26 @@ function getMapAndCode() {
 }
 
 
-var pyodide = null;
-
 async function main() {
-  pyodide = await loadPyodide();
-  pyodide.FS.create("coati.py");
-  pyodide.FS.writeFile("coati.py", (await (await window.fetch("coati.py")).text()));
-  pyodide.FS.create("kara.py");
-  pyodide.FS.writeFile("kara.py", (await (await window.fetch("kara.py")).text()));
+  window.pyodide = await loadPyodide();
+  window.pyodide.FS.create("coati.py");
+  window.pyodide.FS.writeFile("coati.py", (await (await window.fetch("coati.py")).text()));
+  window.pyodide.FS.create("kara.py");
+  window.pyodide.FS.writeFile("kara.py", (await (await window.fetch("kara.py")).text()));
+  window.savedMap = JSON.parse(localStorage.getItem("coatiField"));
+  window.speed = 250;
+  window.field = new Field("#output", saveMap);
+  window.field.onupdate = saveMap
+  window.coati = new Coati(window.field);
+  if (window.savedMap) {
+    window.field.setMap(window.savedMap);
+  }
+  window.uiclick = "Item.nothing";
+  window.left_pressed = false;
+  window.right_pressed = false;
+  window.scroll_position = -1;
+  window.queue = [];
+  window.qcd = 2;
   $("#run").text("▶")
   $(".itembar").draggable({
     cancel: ".itemimg",
@@ -447,57 +517,7 @@ async function main() {
     }
     window.scroll_position = imguclass;
   })
-  $("td").click(function() {
-    if (window.running) {
-      return;
-    }
-    window.field.cset($(this).attr("x"), $(this).attr("y"), eval(window.uiclick));
-  })
-  $("td").on("mousedown", function (e1) {
-    if (window.running) {
-      return alert("You can't edit the map while the program is running.");
-    }
-    $("td").one("mouseup", function (e2) {
-      if (e1.which == 2 && e1.target == e2.target) {
-        var $this = $(this);
-        var imguclass = "-1";
-        if ($this.hasClass("imgu-0")) {
-          imguclass = "0";
-        } else if ($this.hasClass("imgu-1")) {
-          imguclass = "1";
-        } else if ($this.hasClass("imgu-2")) {
-          imguclass = "2";
-        } else if ($this.hasClass("imgu-3")) {
-          imguclass = "3";
-        }
-        if (imguclass == "-1") {
-          $(".itemimg").removeClass("selected");
-        } else {
-          $(".itemimg.imgu-" + imguclass).click();
-        }
-      }
-    });
-  });
-  $("td").contextmenu(function() {
-    if (window.running) {
-      return;
-    }
-    if ($(this).hasClass("imgu-0")) {
-      window.coati.turnRight();
-    }
-    window.field.cset($(this).attr("x"), $(this).attr("y"), Item.delete);
-    event.preventDefault();
-  })
-  $("td").hover(function() {
-    if (window.running) {
-      return;
-    }
-    if (window.left_pressed) {
-      window.field.cset($(this).attr("x"), $(this).attr("y"), eval(window.uiclick));
-    } else if (window.right_pressed) {
-      window.field.cset($(this).attr("x"), $(this).attr("y"), Item.delete);
-    }
-  })
+
   $(".right").on('DOMMouseScroll', function(event) {
     if (event.originalEvent.detail <= 0) {
       window.scroll_position ++;
@@ -541,7 +561,7 @@ async function main() {
   $("#run").click(() => {
     $("#run").text("⏹")
     if (window.running) {
-      window.field.update(window.field, window.field.shownState);
+      window.field.update(window.field.shownState);
       window.field.maps.stones = d[1][1].stones;
       window.field.maps.balls = d[1][1].balls;
       window.field.maps.worms = d[1][1].worms;
@@ -564,7 +584,7 @@ async function main() {
   })
   $("#skip").click(() => {
     if (window.running) {
-      window.field.update(window.field, getMapAndCode());
+      window.field.update(getMapAndCode());
       window.queue.length = 0;
       $("#run").text("▶");
       window.running = false;
@@ -597,7 +617,7 @@ async function main() {
     localStorage.setItem("coatiCode", $("#input").val())
   })
 
-  $("#input").val(__savedMap?.code || "import coati\n\n# To see a list of functions availible,\n# go to https://l.jojojux.de/MTk3Nj\n\nwhile not coati.stone_front():\n    coati.move()")
+  $("#input").val(window.savedMap?.code || "import coati\n\n# To see a list of functions availible,\n# go to https://l.jojojux.de/MTk3Nj\n\nwhile not coati.stone_front():\n    coati.move()")
 
 
   $("#title").click(() => {
@@ -614,7 +634,7 @@ async function main() {
   $("#run").disableSelection();
   $("#skip").disableSelection();
 
-  window.field.update(window.field, getMapAndCode());
+  window.field.update(getMapAndCode());
 
   $("body").mouseup(function() {
     if (event.which === 1) {
@@ -656,14 +676,14 @@ async function main() {
       window.coati.__y = backup.figure.y;
       window.coati.__r = backup.figure.r;
 
-      window.field.update(window.field, getMapAndCode())
+      window.field.update(getMapAndCode())
       saveMap();
-      __savedMap = getMapAndCode();
+      window.savedMap = getMapAndCode();
     }
   })
   $("#reset-map").click(function() {
     if (confirm("Are you sure you want to reset the map? This will clear all your changes made after the last page reload, or since the last import, if you didn't reload the page since then.")) {
-      var backup = __savedMap;
+      var backup = window.savedMap;
 
       $("#input").val(backup.code);
 
@@ -675,9 +695,9 @@ async function main() {
       window.coati.__y = backup.figure.y;
       window.coati.__r = backup.figure.r;
 
-      window.field.update(window.field, getMapAndCode())
+      window.field.update(getMapAndCode())
       saveMap();
-      __savedMap = getMapAndCode();
+      window.savedMap = getMapAndCode();
     }
   })
   $("#clear-map").click(function() {
@@ -694,9 +714,9 @@ async function main() {
       window.coati.__y = 0;
       window.coati.__r = 0;
 
-      window.field.update(window.field, getMapAndCode())
+      window.field.update(getMapAndCode())
       saveMap();
-      __savedMap = getMapAndCode();
+      window.savedMap = getMapAndCode();
     }
   })
   $("#welcome-guide").click(function() {
@@ -705,19 +725,12 @@ async function main() {
   $("#source").click(function() {
     window.location.href = "https://github.com/J0J0HA/CoatiPython";
   })
+  setInterval(updateSpeed, 100);
+  applyUpdate();
 }
-$(() => {
-  r = 0;
-  $("tr").each(function() {
-    l = 0;
-    $(this).children().each(function() {
-      $(this).attr("x", l);
-      $(this).attr("y", r);
-      l++;
-    })
-    r++;
-  })
 
+
+$(() => {
   if (window.location.hash == "#welcome") {
     localStorage.setItem("welcome", Date.now());
   } else if (window.location.hash == "#welcome-again") {
@@ -726,7 +739,7 @@ $(() => {
   window.location.hash = "#";
 
   var welcome = localStorage.getItem("welcome");
-  
+
   if ((!welcome) || (welcome < (Date.now() - 1000 * 60 * 60 * 24 * 30))) {
     window.location.href = "welcome";
   } else {
