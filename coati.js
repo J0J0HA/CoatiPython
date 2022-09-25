@@ -718,22 +718,17 @@ $(() => {
     r++;
   })
 
+  if (window.location.hash == "#welcome") {
+    localStorage.setItem("welcome", Date.now());
+  } else if (window.location.hash == "#welcome-again") {
+    localStorage.setItem("welcome", Date.now() - 1000 * 60 * 60 * 24 * 30);
+  }
+  window.location.hash = "#";
+
   var welcome = localStorage.getItem("welcome");
-  var thd = 1000 * 60 * 60 * 24 * 30;
-  console.log((!welcome) || (welcome < (Date.now() - thd)));
-  if ((!welcome) || (welcome < (Date.now() - thd))) {
-    if (window.location.hash == "#welcome") {
-      console.log(1);
-      window.location.hash = "#";
-      localStorage.setItem("welcome", Date.now());
-    } else if (window.location.hash == "#welcome-again") {
-      console.log(2);
-      window.location.hash = "#";
-      localStorage.setItem("welcome", Date.now() - 1000 * 60 * 60 * 24 * 30);
-    } else {
-      console.log(3);
-      window.location.href = "welcome";
-    }
+  
+  if ((!welcome) || (welcome < (Date.now() - 1000 * 60 * 60 * 24 * 30))) {
+    window.location.href = "welcome";
   } else {
     main();
   }
