@@ -449,11 +449,14 @@ async function main() {
   })
   $("td").click(function() {
     if (window.running) {
-      alert("You can't edit the map while the program is running.");
+      return;
     }
     window.field.cset($(this).attr("x"), $(this).attr("y"), eval(window.uiclick));
   })
   $("td").on("mousedown", function (e1) {
+    if (window.running) {
+      return alert("You can't edit the map while the program is running.");
+    }
     $("td").one("mouseup", function (e2) {
       if (e1.which == 2 && e1.target == e2.target) {
         var $this = $(this);
@@ -477,7 +480,7 @@ async function main() {
   });
   $("td").contextmenu(function() {
     if (window.running) {
-      alert("You can't edit the map while the program is running.");
+      return;
     }
     if ($(this).hasClass("imgu-0")) {
       window.coati.turnRight();
@@ -486,15 +489,12 @@ async function main() {
     event.preventDefault();
   })
   $("td").hover(function() {
+    if (window.running) {
+      return;
+    }
     if (window.left_pressed) {
-      if (window.running) {
-        alert("You can't edit the map while the program is running.");
-      }
       window.field.cset($(this).attr("x"), $(this).attr("y"), eval(window.uiclick));
     } else if (window.right_pressed) {
-      if (window.running) {
-        alert("You can't edit the map while the program is running.");
-      }
       window.field.cset($(this).attr("x"), $(this).attr("y"), Item.delete);
     }
   })
