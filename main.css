@@ -154,25 +154,28 @@ html, body {
   text-align: center;
 }
 
+:root {
+  --table-size: min(calc(50vw - 35px), calc(100vh - 80px));
+  --cell-size: calc(min(calc(50vw - 35px), calc(100vh - 80px)) / 10);
+}
+
 table {
-  width: min(49vw, calc(99vh - 50px));
-  height: min(49vw, calc(99vh - 50px));
-  min-width: 130px;
-  min-height: 130px;
+  width: var(--table-size);
+  height: var(--table-size);
 }
 
 tr {
-  width: 50vmin;
-  height: 5vmin;
+  width: var(--table-size);
+  height: var(--cell-size);
 }
 
 td, .img {
-  width: 5vmin;
-  height: 5vmin;
-  max-width: 5vmin;
-  max-height: 5vmin;
-  min-width: 5vmin;
-  min-height: 5vmin;
+  width: var(--cell-size);
+  height: var(--cell-size);
+  max-width: var(--cell-size);
+  min-width: var(--cell-size);
+  max-height: var(--cell-size);
+  min-height: var(--cell-size);
   background-color: #343c47;
   background-size: cover;
 }
