@@ -499,7 +499,26 @@ async function main() {
     }
   })
   $(".right").on('DOMMouseScroll', function(event) {
-    if (event.originalEvent.detail >= 0) {
+    if (event.originalEvent.detail <= 0) {
+      window.scroll_position ++;
+    }
+    else {
+      window.scroll_position --;
+    }
+    if (window.scroll_position < -1) {
+      window.scroll_position = 4;
+    } else if (window.scroll_position > 4) {
+      window.scroll_position = -1;
+    }
+    if (window.scroll_position == -1) {
+      $(".itemimg").removeClass("selected");
+      window.uiclick = "Item.nothing";
+    } else {
+      $(".itemimg.imgu-" + window.scroll_position).click();
+    }
+  })
+  $(".right").on('mousewheel', function(event) {
+    if (event.originalEvent.wheelDelta >= 0) {
       window.scroll_position ++;
     }
     else {
