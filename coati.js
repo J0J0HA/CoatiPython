@@ -702,6 +702,9 @@ async function main() {
   $("#welcome-guide").click(function() {
     window.location.href = "welcome";
   })
+  $("#source").click(function() {
+    window.location.href = "https://github.com/J0J0HA/CoatiPython";
+  })
 }
 $(() => {
   r = 0;

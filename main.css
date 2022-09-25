@@ -225,6 +225,7 @@ td, .img {
 }
 
 #sidebar {
+  font-size: 20px;
   height: 100vh;
   z-index: 999;
   width: 25vw;
