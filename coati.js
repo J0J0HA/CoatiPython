@@ -720,14 +720,18 @@ $(() => {
 
   var welcome = localStorage.getItem("welcome");
   var thd = 1000 * 60 * 60 * 24 * 30;
-  if ((!welcome) || (welcome < Date.now() - thd)) {
+  console.log((!welcome) || (welcome < (Date.now() - thd)));
+  if ((!welcome) || (welcome < (Date.now() - thd))) {
     if (window.location.hash == "#welcome") {
+      console.log(1);
       window.location.hash = "#";
       localStorage.setItem("welcome", Date.now());
     } else if (window.location.hash == "#welcome-again") {
+      console.log(2);
       window.location.hash = "#";
       localStorage.setItem("welcome", Date.now() - 1000 * 60 * 60 * 24 * 30);
     } else {
+      console.log(3);
       window.location.href = "welcome";
     }
   } else {

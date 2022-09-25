@@ -1,5 +1,5 @@
 body {
-  overflow: hidden;
+  overflow-y: scroll;
   color: #abb2bf;
   background: #282c34;
   font-family: Roboto, monospace;
