@@ -378,12 +378,12 @@ class Coati {
   move() {
     var coords = this.__front();
     if (this.__f.maps.stones[coords.x][coords.y]) {
-      throw new Error("Can't move! There is a stone in the way!");
+      throw new Error("towardsstone");
     }
     if (this.__f.maps.balls[coords.x][coords.y]) {
       var mushcoords = this.__front(coords.x, coords.y);
       if (this.__f.maps.balls[mushcoords.x][mushcoords.y]) {
-        throw new Error("Can't move multiple balls at the same time!");
+        throw new Error("multipleballs");
       }
       this.__f.maps.balls[coords.x][coords.y] = false;
       this.__f.maps.balls[mushcoords.x][mushcoords.y] = true;
@@ -409,14 +409,14 @@ class Coati {
 
   putWorm() {
     if (this.onWorm()) {
-      throw new Error("There is already a Worm")
+      throw new Error("aworm")
     }
     this.__f.maps.worms[this.__x][this.__y] = true;
   }
 
   removeWorm() {
     if (!this.onWorm()) {
-      throw new Error("No Worm to remove")
+      throw new Error("noworm")
     }
     this.__f.maps.worms[this.__x][this.__y] = false;
   }
@@ -465,8 +465,11 @@ function updateSpeed() {
 
 function applyUpdate() {
   var f = {
-    "update": function(a) {
+    "update": function (a) {
       window.field.update(a);
+    },
+    "error": function (a) {
+      alert("Your code raised an uncaught error!\n\nTip: Mostly, only the last 1-3 lines are important!\nIt was:\n\n" + a.message)
     }
   }
   if (window.queue.length > 0) {
@@ -482,10 +485,6 @@ function applyUpdate() {
     $("#skip").css("opacity", "0.5");
   }
   setTimeout(applyUpdate, window.speed);
-}
-
-function ealert(e) {
-  alert("Failed!\n\n" + e)
 }
 
 function getMapAndCode() {
@@ -617,7 +616,7 @@ async function main() {
       try {
         pyodide.runPython($("#input").val(), {})
       } catch (e) {
-        window.queue.push([ealert, [e.message]])
+        window.queue.push(["error", [e]])
       }
     }
   })
@@ -656,7 +655,7 @@ async function main() {
     localStorage.setItem("coatiCode", $("#input").val())
   })
 
-  $("#input").val(window.savedMap?.code || "import coati\n\n# To see a list of functions availible,\n# go to https://l.jojojux.de/MTk3Nj\n\nwhile not coati.stone_front():\n    coati.move()")
+  $("#input").val(window.savedMap?.code || "import coati\n\n# To see a list of functions available,\n# go to https://l.jojojux.de/MTk3Nj\n\nwhile not coati.stone_front():\n    coati.move()")
 
 
   $("#title").click(() => {
@@ -751,13 +750,14 @@ async function main() {
     }
   })
   $("#select-theme").click(function() {
-    var theme = prompt("Theme selection is not optimized yet.\n\nCurrently availible themes are:\n - default\n - kara\n\nWrite theme name here:")
+    var theme = prompt("Theme selection is not optimized yet.\n\nCurrently available themes are:\n - default\n - kara\n\nWrite theme name here:")
     if (theme) {
       localStorage.setItem("theme", theme);
       applyTheme(theme);
     }
   })
   $("#welcome-guide").click(function() {
+    throw new Error("test");
     window.location.href = "welcome";
   })
   $("#source").click(function() {
@@ -769,6 +769,10 @@ async function main() {
 
 
 $(() => {
+  window.addEventListener('error', (event) => {
+    alert("An error occurred at line " + event.lineno + " in column " + event.colno + ":\n" + event.message);
+  });
+
   if (window.location.hash == "#welcome") {
     localStorage.setItem("welcome", Date.now());
   } else if (window.location.hash == "#welcome-again") {
