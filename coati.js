@@ -44,6 +44,43 @@ function set_css_var(name, value) {
   __root.style.setProperty(name, value);
 }
 
+function applyTheme(theme, base) {
+  base = (base || "themes") + "/" + theme;
+  $("style").text(`
+    .imgu-0 {
+      background-image: url("${base}/0.png");
+    }
+
+    .imgu-1 {
+      background-image: url("${base}/1.png");
+    }
+
+    .imgu-2 {
+      background-image: url("${base}/2.png");
+    }
+
+    .imgu-3 {
+      background-image: url("${base}/3.png");
+    }
+
+    .imgu-4 {
+      background-image: url("${base}/4.png");
+    }
+
+    .imgu-0.imgu-1 {
+      background-image: url("${base}/1+0.png");
+    }
+
+    .imgu-2.imgu-1 {
+      background-image: url("${base}/1+2.png");
+    }
+  `)
+}
+
+
+
+
+
 
 
 
@@ -655,8 +692,11 @@ async function main() {
     }
   })
   $("#export-file").click(function() {
-    var blob = new Blob([JSON.stringify(getMapAndCode())], {type: "text/plain;charset=utf-8"});
-    saveAs(blob, prompt("Name your file:") + ".coati");
+    var name = prompt("Name your file:");
+    if (name) {
+      var blob = new Blob([JSON.stringify(getMapAndCode())], {type: "text/plain;charset=utf-8"});
+      saveAs(blob, name + ".coati");
+    }
   })
   $("#import-file").click(function() {
     $("#upload").css("display", "block");
@@ -703,22 +743,17 @@ async function main() {
     }
   })
   $("#clear-map").click(function() {
-    if (confirm("Are you sure you want to clear the map? This will delete all contents of map.")) {
-      for (var y = 0; y < 10; y++) {
-        for (var x = 0; x < 10; x++) {
-          window.field.maps.stones[x][y] = false;
-          window.field.maps.balls[x][y] = false;
-          window.field.maps.worms[x][y] = false;
-        }
-      }
-
-      window.coati.__x = 0;
-      window.coati.__y = 0;
-      window.coati.__r = 0;
-
-      window.field.update(getMapAndCode())
+    var size = prompt("Are you sure you want to clear the map? This will delete all contents of map.\n\nSize:");
+    if (size) {
+      window.field.resize(size)
       saveMap();
       window.savedMap = getMapAndCode();
+    }
+  })
+  $("#select-theme").click(function() {
+    var theme = prompt("Theme selection is not optimized yet.\n\nCurrently availible themes are:\n - default\n - kara\n\nWrite theme name here:")
+    if (theme) {
+      applyTheme(theme);
     }
   })
   $("#welcome-guide").click(function() {

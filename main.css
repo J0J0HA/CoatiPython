@@ -102,37 +102,6 @@ html, body {
   white-space: none;
 }
 
-
-.imgu-0 {
-  background-image: url(img-0.png);
-}
-
-.imgu-1 {
-  background-image: url(img-1.png);
-}
-
-.imgu-2 {
-  background-image: url(img-2.png);
-}
-
-.imgu-3 {
-  background-image: url(img-3.png);
-}
-
-.imgu-4 {
-  background-image: url(img-4.png);
-}
-
-
-.imgu-0.imgu-1 {
-  background-image: url(img-0+1.png);
-}
-
-.imgu-2.imgu-1 {
-  background-image: url(img-2+1.png);
-}
-
-
 .imgr-0 {
   transform: rotate(0deg);
 }
