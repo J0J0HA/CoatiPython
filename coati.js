@@ -61,10 +61,10 @@ const Item = {
 }
 
 const Rotation = {
-  front: 3,
-  left: 0,
-  back: 1,
-  right: 2
+  front: 0,
+  right: 1,
+  back: 2,
+  left: 3
 }
 
 class Field {
@@ -83,12 +83,12 @@ class Field {
       worms: []
     };
     var code = "";
-    for (var x = 0; x < size; x++) {
+    for (var y = 0; y < size; y++) {
       var icode = "";
       var istones = [];
       var iballs = [];
       var iworms = [];
-      for (var y = 0; y < size; y++) {
+      for (var x = 0; x < size; x++) {
         icode += "<td x='" + x + "' y='" + y + "'></td>";
         istones.push(false);
         iballs.push(false);
@@ -305,10 +305,10 @@ class Coati {
       coords.y --;
     } else if (this.__r == Rotation.back) {
       coords.y ++;
-    } else if (this.__r == Rotation.left) {
-      coords.x --;
     } else if (this.__r == Rotation.right) {
       coords.x ++;
+    } else if (this.__r == Rotation.left) {
+      coords.x --;
     }
 
     // Check World end
