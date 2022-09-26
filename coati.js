@@ -481,6 +481,8 @@ async function main() {
   window.coati = new Coati(window.field);
   if (window.savedMap) {
     window.field.setMap(window.savedMap);
+  } else {
+    window.field.resize(10);
   }
   window.uiclick = "Item.nothing";
   window.left_pressed = false;
