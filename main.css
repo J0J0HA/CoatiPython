@@ -234,6 +234,63 @@ transition: left 0.2s ease-out;
   left: 0;
 }
 
-#upload {
+#upload-map, #upload-code {
+  display: none;
+}
+
+.popup.container {
+  position: absolute;
+  top: 50vh;
+  left: 50vw;
+  transform: translate(-50%, -50%);
+  display: block;
+  padding: 20px;
+  border-radius: 20px;
+  background-color: #1a1c20;
+  -webkit-box-shadow: 0px 0px 25px 15px rgba(26,28,32,0.5);
+  box-shadow: 0px 0px 25px 15px rgba(26,28,32,0.5);
+  z-index: 900;
+  min-width: min(200px, calc(100vw - 40px));
+}
+.popup.title {
+  font-size: 25px;
+  display: block;
+  background-color: inherit;
+}
+.popup.content {
+  font-size: 15px;
+  display: block;
+  background-color: inherit;
+  margin-bottom: 5px;
+}
+.popup.buttons {
+  font-size: 15px;
+  background-color: inherit;
+  width: 100%;
+}
+.popup.buttons > button {
+  font-size: 15px;
+  background-color: inherit;
+  padding: 5px;
+  margin-left: 5px;
+  border-radius: 5px;
+  border-color: #343c47;
+  transition: all 0.2s ease-in-out;
+}
+.popup.buttons > button:hover {
+  background-color: #555d68;
+}
+.popup.buttons > button:first-child {
+  margin-left: 0px;
+}
+
+#cover {
+  width: 100vw;
+  height: 100vh;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  opacity: 0.3;
+  z-index: 800;
   display: none;
 }

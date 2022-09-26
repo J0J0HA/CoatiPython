@@ -77,6 +77,61 @@ function applyTheme(theme, base) {
   `)
 }
 
+function createPopup(title, text, disable, closeable, buttons, buttonsListed) {
+  if (!window.popupcount) {
+    window.popupcount = 0;
+  }
+  var id = window.popupcount ++;
+  if (buttonsListed) {
+    var buttonhtml = "<ul>";
+    for (var button in buttons) {
+      buttonhtml += `<li popup="${id}" button="${button}">${buttons[button].text}</li>`;
+    }
+    buttonhtml += "</ul>";
+  } else {
+    var buttonhtml = "";
+    for (var button in buttons) {
+      buttonhtml += `<button popup="${id}" button="${button}">${buttons[button].text}</button>`;
+    }
+  }
+  var html = `
+  <div popup="${id}" class="popup container">
+    <div popup="${id}" class="popup title">${title}</div>
+    <div popup="${id}" class="popup content">${text}</div>
+    <div popup="${id}" class="popup buttons">${buttonhtml}</div>
+  </div>
+  `;
+  $("#popups").append(html);
+  $(`#cover`).css("display", "block");
+  if (closeable) {
+    $(`#cover`).click(()=>closePopup(id));
+  }
+  if (buttonsListed) {
+    for (var button in buttons) {
+      $(`li[popup='${id}'][button='${button}']`).click(buttons[button].onclick);
+    }
+  } else {
+    for (var button in buttons) {
+      $(`button[popup='${id}'][button='${button}']`).click(buttons[button].onclick);
+    }
+  }
+  return id;
+}
+
+function closePopup(id) {
+  $(`.container[popup='${id}']`).css("opacity", "0");
+  $(`#cover`).css("display", "none");
+  setTimeout(function() {
+    $(`.container[popup='${id}']`).remove();
+  }, 300)
+}
+
+function getPopup(_this) {
+  return parseInt($(_this).attr("button"));
+}
+function getNewestPopup() {
+  return window.popupcount - 1;
+}
 
 
 
@@ -449,7 +504,7 @@ class Coati {
 }
 
 function saveMap() {
-  localStorage.setItem("coatiField", JSON.stringify(getMapAndCode()))
+  localStorage.setItem("map", JSON.stringify(getMapAndCode()))
 }
 
 function saveState() {
@@ -499,8 +554,7 @@ function getMapAndCode() {
     },
     stones: window.field.maps.stones,
     balls: window.field.maps.balls,
-    worms: window.field.maps.worms,
-    code: $("#input").val()
+    worms: window.field.maps.worms
   });
 }
 
@@ -512,7 +566,7 @@ async function main() {
   window.pyodide.FS.writeFile("coati.py", (await (await window.fetch("coati.py")).text()));
   window.pyodide.FS.create("kara.py");
   window.pyodide.FS.writeFile("kara.py", (await (await window.fetch("kara.py")).text()));
-  window.savedMap = JSON.parse(localStorage.getItem("coatiField"));
+  window.savedMap = JSON.parse(localStorage.getItem("map"));
   window.speed = 250;
   window.field = new Field("#output", saveMap);
   window.field.onupdate = saveMap
@@ -654,10 +708,12 @@ async function main() {
   })
 
   $("#input").keyup(() => {
-    localStorage.setItem("coatiCode", $("#input").val())
+    localStorage.setItem("code", $("#input").val())
   })
 
-  $("#input").val(window.savedMap?.code || "import coati\n\n# To see a list of functions available,\n# go to https://l.jojojux.de/MTk3Nj\n\nwhile not coati.stone_front():\n    coati.move()")
+  console.log(window.savedMap);
+
+  $("#input").val(localStorage.getItem("code") || "import coati\n\n# To see a list of functions available,\n# go to https://l.jojojux.de/MTk3Nj\n\nwhile not coati.stone_front():\n    coati.move()")
 
 
   $("#title").click(() => {
@@ -693,23 +749,57 @@ async function main() {
     }
   })
   $("#export-file").click(function() {
-    var name = prompt("Name your file:");
-    if (name) {
-      var blob = new Blob([JSON.stringify(getMapAndCode())], {type: "text/plain;charset=utf-8"});
-      saveAs(blob, name + ".coati");
-    }
+    createPopup("Export", "What do you want to export?", true, true, [
+      {
+        text: "Map (.coati)",
+        onclick: () => {
+          var name = prompt("Name your file:");
+          if (name) {
+            var blob = new Blob([JSON.stringify(getMapAndCode())], {type: "text/plain;charset=utf-8"});
+            saveAs(blob, name + ".coati");
+          }
+          closePopup(getNewestPopup());
+        }
+      },
+      {
+        text: "Code (.py)",
+        onclick: () => {
+          var name = prompt("Name your file:");
+          if (name) {
+            var blob = new Blob([$("#input").val()], {type: "text/plain;charset=utf-8"});
+            saveAs(blob, name + ".py");
+          }
+          closePopup(getNewestPopup());
+        }
+      }
+    ], false)
   })
   $("#import-file").click(function() {
-    $("#upload").css("display", "block");
-    $("#upload").click();
-    $("#upload").css("display", "none");
+    createPopup("Import", "What do you want to import?", true, true, [
+      {
+        text: "Map (.coati)",
+        onclick: () => {
+          $("#upload-map").css("display", "block");
+          $("#upload-map").click();
+          $("#upload-map").css("display", "none");
+          closePopup(getNewestPopup());
+        }
+      },
+      {
+        text: "Code (.py)",
+        onclick: () => {
+          $("#upload-code").css("display", "block");
+          $("#upload-code").click();
+          $("#upload-code").css("display", "none");
+          closePopup(getNewestPopup());
+        }
+      }
+    ], false)
   })
-  $("#upload").on('change', async function() {
-    if (confirm("Are you sure you want to upload this project? This will clear your current project.")) {
-      var content = await $("#upload")[0].files[0].text();
+  $("#upload-map").on('change', async function() {
+    if (confirm("Are you sure you want to upload this file? This will override any unsaved changes to your current map.")) {
+      var content = await $("#upload-map")[0].files[0].text();
       var backup = JSON.parse(content);
-
-      $("#input").val(backup.code);
 
       window.field.maps.stones = backup.stones;
       window.field.maps.balls = backup.balls;
@@ -722,13 +812,22 @@ async function main() {
       window.field.update(getMapAndCode())
       saveMap();
       window.savedMap = getMapAndCode();
+      localStorage.setItem("lastImport", JSON.stringify(getMapAndCode()));
+    }
+  })
+  $("#upload-code").on('change', async function() {
+    if (confirm("Are you sure you want to upload this file? This will override any unsaved changes to your current code.")) {
+      var code = await $("#upload-code")[0].files[0].text();
+      $("#input").val(code);
+      localStorage.setItem("code", code)
     }
   })
   $("#reset-map").click(function() {
     if (confirm("Are you sure you want to reset the map? This will clear all your changes made after the last page reload, or since the last import, if you didn't reload the page since then.")) {
-      var backup = window.savedMap;
-
-      $("#input").val(backup.code);
+      var backup = JSON.parse(localStorage.getItem("lastImport"));
+      if (!backup) {
+        return alert("No import found to set to.");
+      }
 
       window.field.maps.stones = backup.stones;
       window.field.maps.balls = backup.balls;
@@ -756,11 +855,26 @@ async function main() {
     }
   })
   $("#select-theme").click(function() {
-    var theme = prompt("Theme selection is not optimized yet.\n\nCurrently available themes are:\n - default\n - kara\n\nWrite theme name here:")
-    if (theme) {
-      localStorage.setItem("theme", theme);
-      applyTheme(theme);
+    function _(name) {
+      localStorage.setItem("theme", name);
+      applyTheme(name);
     }
+    createPopup("Select Theme", "Select a theme to apply:", true, true, [
+      {
+        text: "Standard",
+        onclick: function() {
+          _("default");
+          closePopup(getNewestPopup());
+        }
+      },
+      {
+        text: "Kara-Design",
+        onclick: function() {
+          _("kara");
+          closePopup(getNewestPopup());
+        }
+      }
+    ], true)
   })
   $("#welcome-guide").click(function() {
     throw new Error("test");
