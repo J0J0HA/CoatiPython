@@ -147,7 +147,7 @@ class Field {
       if (window.running) {
         return;
       }
-      window.field.cset($(this).attr("x"), $(this).attr("y"), eval(window.uiclick));
+      window.field.cset(parseInt($(this).attr("x")), parseInt($(this).attr("y")), eval(window.uiclick));
     })
     $("td").on("mousedown", function (e1) {
       if (window.running) {
@@ -181,7 +181,7 @@ class Field {
       if ($(this).hasClass("imgu-0")) {
         window.coati.turnRight();
       }
-      window.field.cset($(this).attr("x"), $(this).attr("y"), Item.delete);
+      window.field.cset(parseInt($(this).attr("x")), parseInt($(this).attr("y")), Item.delete);
       event.preventDefault();
     })
     $("td").hover(function() {
@@ -189,9 +189,9 @@ class Field {
         return;
       }
       if (window.left_pressed) {
-        window.field.cset($(this).attr("x"), $(this).attr("y"), eval(window.uiclick));
+        window.field.cset(parseInt($(this).attr("x")), parseInt($(this).attr("y")), eval(window.uiclick));
       } else if (window.right_pressed) {
-        window.field.cset($(this).attr("x"), $(this).attr("y"), Item.delete);
+        window.field.cset(parseInt($(this).attr("x")), parseInt($(this).attr("y")), Item.delete);
       }
     })
   }
@@ -280,11 +280,10 @@ class Field {
 
   cset(x, y, i) {
     if (x < 0 || x > this.size) {
-      throw new Error("x is out of bounds: " + x);
+      throw new Error("x is out of bounds: " + x?.toString());
     }
-
     if (y < 0 || y > this.size) {
-      throw new Error("y is out of bounds: " + y);
+      throw new Error("y is out of bounds: " + y?.toString());
     }
 
     if (i == Item.figure) {
@@ -506,6 +505,7 @@ function getMapAndCode() {
 
 
 async function main() {
+  applyTheme(localStorage.getItem("theme") || "default");
   window.pyodide = await loadPyodide();
   window.pyodide.FS.create("coati.py");
   window.pyodide.FS.writeFile("coati.py", (await (await window.fetch("coati.py")).text()));
@@ -745,7 +745,7 @@ async function main() {
   $("#clear-map").click(function() {
     var size = prompt("Are you sure you want to clear the map? This will delete all contents of map.\n\nSize:");
     if (size) {
-      window.field.resize(size)
+      window.field.resize(parseInt(size));
       saveMap();
       window.savedMap = getMapAndCode();
     }
@@ -753,6 +753,7 @@ async function main() {
   $("#select-theme").click(function() {
     var theme = prompt("Theme selection is not optimized yet.\n\nCurrently availible themes are:\n - default\n - kara\n\nWrite theme name here:")
     if (theme) {
+      localStorage.setItem("theme", theme);
       applyTheme(theme);
     }
   })
