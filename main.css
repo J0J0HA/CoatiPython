@@ -125,8 +125,8 @@ html, body {
 
 :root {
   --cell-amount: 10;
-  --table-size: min(calc(50vw - 35px), calc(100vh - 80px));
-  --cell-size: calc(min(calc(50vw - 35px), calc(100vh - 80px)) / var(--cell-amount));
+  --table-size: min(45vw, calc(100vh - 100px));
+  --cell-size: calc(min(45vw, calc(100vh - 100px)) / var(--cell-amount));
 }
 
 table {

@@ -206,6 +206,7 @@ class Field {
     cell.removeClass('imgu-1');
     cell.removeClass('imgu-2');
     cell.removeClass('imgu-3');
+    cell.removeClass('imgr-0');
     cell.removeClass('imgr-1');
     cell.removeClass('imgr-2');
     cell.removeClass('imgr-3');
@@ -236,8 +237,9 @@ class Field {
       throw new Error("y is out of bounds: " + y?.toString());
     }
 
-    this.render_get(x, y).addClass('imgu-' + i);
-    this.render_get(x, y).addClass('imgr-' + r);
+    var cell = this.render_get(x, y);
+    cell.addClass('imgu-' + i);
+    cell.addClass('imgr-' + r);
   }
 
   setMap(map) {
@@ -742,9 +744,13 @@ async function main() {
     }
   })
   $("#clear-map").click(function() {
-    var size = prompt("Are you sure you want to clear the map? This will delete all contents of map.\n\nSize:");
-    if (size) {
-      window.field.resize(parseInt(size));
+    var size = prompt("Are you sure you want to clear the map? This will delete all contents of map.\n\nSize (3-20):");
+    if (size && parseInt(size)) {
+      size = parseInt(size);
+      if (size < 3 || size > 20) {
+        return alert("Size must be between 3 and 20.")
+      }
+      window.field.resize(size);
       saveMap();
       window.savedMap = getMapAndCode();
     }

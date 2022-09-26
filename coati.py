@@ -10,8 +10,8 @@ class MovedMultipleBalls(CoatiError): pass
 
 __errors = {
     "towardsstone": MovedTowardsStone("Can't move! There is a stone in the way!"),
-    "noworm": NoWormThere("No Worm to remove"),
-    "aworm": WormAlreadyPlaced("There is already a Worm"),
+    "noworm": NoWormThere("No worm to remove"),
+    "aworm": WormAlreadyPlaced("There is already a worm"),
     "multipleballs": MovedMultipleBalls("Can't move multiple balls at the same time!")
 }
 
