@@ -2,10 +2,10 @@ import js as __js
 import pyodide as __py
 
 class KaraError(BaseException): pass
-class MovedTowardsStone(CoatiError): pass
-class NoWormThere(CoatiError): pass
-class WormAlreadyPlaced(CoatiError): pass
-class MovedMultipleBalls(CoatiError): pass
+class MovedTowardsStone(KaraError): pass
+class NoWormThere(KaraError): pass
+class WormAlreadyPlaced(KaraError): pass
+class MovedMultipleBalls(KaraError): pass
 
 
 __errors = {
