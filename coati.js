@@ -77,7 +77,7 @@ function applyTheme(theme, base) {
   `)
 }
 
-function createPopup(title, text, disable, closeable, buttons, buttonsListed) {
+function createPopup(title, text, disable, closeable, buttons, buttonsListed, onclose) {
   if (!window.popupcount) {
     window.popupcount = 0;
   }
@@ -104,7 +104,7 @@ function createPopup(title, text, disable, closeable, buttons, buttonsListed) {
   $("#popups").append(html);
   $(`#cover`).css("display", "block");
   if (closeable) {
-    $(`#cover`).click(()=>closePopup(id));
+    $(`#cover`).click(()=>{closePopup(id);if(onclose)onclose();});
   }
   if (buttonsListed) {
     for (var button in buttons) {
@@ -129,11 +129,47 @@ function closePopup(id) {
 function getPopup(_this) {
   return parseInt($(_this).attr("button"));
 }
+
 function getNewestPopup() {
   return window.popupcount - 1;
 }
 
+function iframePopup(title, url, disable, closable, buttons, buttonsListed) {
+  return createPopup(title, `<iframe src="${url}">iFrames are not supported on your device/browser.</iframe>`, disable, closable, buttons, buttonsListed);
+}
 
+async function showPopup(title, content, buttons, buttonsListed) {
+  return new Promise(function(resolve, reject) {
+    var id = 0;
+    var popbuttons = [];
+    for (var button in buttons) {
+      const bid = button;
+      popbuttons.push({
+        text: buttons[bid],
+        onclick: (() => {
+          resolve(bid);
+          closePopup(id);
+        })
+      })
+    }
+    id = createPopup(title, content, true, true, popbuttons, buttonsListed, reject);
+  });
+}
+
+async function confirmPopup(title, content) {
+  return new Promise(async function(resolve, reject) {
+    try {
+      var result = await showPopup(title, content, ["Yes", "No"], false);
+    } catch (e) {
+      reject();
+    }
+    resolve(result=="0"?true:false);
+  });
+}
+
+/* hidden async */ function alertPopup(title, content) {
+  return showPopup(title, content, ["Ok"], false);
+}
 
 
 
@@ -206,7 +242,7 @@ class Field {
     })
     $("td").on("mousedown", function (e1) {
       if (window.running) {
-        return alert("You can't edit the map while the program is running.");
+        return alertPopup("Failed", "You can't edit the map while the program is running.");
       }
       $("td").one("mouseup", function (e2) {
         if (e1.which == 2 && e1.target == e2.target) {
@@ -512,7 +548,8 @@ function saveMap() {
 }
 
 function saveState() {
-  window.queue.push(["update", [getMapAndCode()]]);
+  window.lastState = getMapAndCode();
+  window.queue.push(["update", [window.lastState]]);
 }
 
 function updateSpeed() {
@@ -530,7 +567,7 @@ function applyUpdate() {
       window.field.update(a);
     },
     "error": function (a) {
-      alert("Your code raised an uncaught error!\n\nTip: Mostly, only the last 1-3 lines are important!\nIt was:\n\n" + a.message)
+      alertPopup("Error", "Your code raised an uncaught error!<br><br>Tip: Mostly, only the last 1-3 lines are important!<br>It was:<br><br>" + a.message)
     }
   }
   if (window.queue.length > 0) {
@@ -541,6 +578,8 @@ function applyUpdate() {
     window.qcd --;
   }
   if (window.qcd == 0) {
+    window.lastState = getMapAndCode();
+    window.lastError = null;
     $("#run").text("▶");
     window.running = false;
     $("#skip").css("opacity", "0.5");
@@ -660,13 +699,14 @@ async function main() {
     $("#run").text("⏹")
     if (window.running) {
       window.field.update(window.field.shownState);
-      window.field.maps.stones = d[1][1].stones;
-      window.field.maps.balls = d[1][1].balls;
-      window.field.maps.worms = d[1][1].worms;
-      window.coati.__x = d[1][1].figure.x;
-      window.coati.__y = d[1][1].figure.y;
-      window.coati.__r = d[1][1].figure.r;
+      window.field.maps.stones = window.field.shownState.stones;
+      window.field.maps.balls = window.field.shownState.balls;
+      window.field.maps.worms = window.field.shownState.worms;
+      window.coati.__x = window.field.shownState.figure.x;
+      window.coati.__y = window.field.shownState.figure.y;
+      window.coati.__r = window.field.shownState.figure.r;
       window.queue.length = 0;
+      window.lastError = null;
       $("#run").text("▶");
       window.running = false;
       $("#skip").css("opacity", "0.5");
@@ -680,14 +720,24 @@ async function main() {
         span.finish(); // Remember that only finished spans will be sent with the transaction
         transaction.finish(); // Finishing the transaction will send it to Sentry
       } catch (e) {
+        window.lastError = e;
         window.queue.push(["error", [e]])
       }
     }
   })
   $("#skip").click(() => {
     if (window.running) {
-      window.field.update(getMapAndCode());
+      window.field.update(window.lastState);
+      window.field.maps.stones = window.lastState.stones;
+      window.field.maps.balls = window.lastState.balls;
+      window.field.maps.worms = window.lastState.worms;
+      window.coati.__x = window.lastState.figure.x;
+      window.coati.__y = window.lastState.figure.y;
+      window.coati.__r = window.lastState.figure.r;
       window.queue.length = 0;
+      if (window.lastError) {
+        window.queue.push(["error", [window.lastError]])
+      }
       $("#run").text("▶");
       window.running = false;
       $("#skip").css("opacity", "0.5");
@@ -805,7 +855,7 @@ async function main() {
     ], false)
   })
   $("#upload-map").on('change', async function() {
-    if (confirm("Are you sure you want to upload this file? This will override any unsaved changes to your current map.")) {
+    if (await confirmPopup("Import", "Are you sure you want to import this file?<br>This will override any unsaved changes to your current map.")) {
       var content = await $("#upload-map")[0].files[0].text();
       var backup = JSON.parse(content);
 
@@ -824,17 +874,17 @@ async function main() {
     }
   })
   $("#upload-code").on('change', async function() {
-    if (confirm("Are you sure you want to upload this file? This will override any unsaved changes to your current code.")) {
+    if (await confirmPopup("Import", "Are you sure you want to import this file?<br>This will override any unsaved changes to your current code.")) {
       var code = await $("#upload-code")[0].files[0].text();
       $("#input").val(code);
       localStorage.setItem("code", code)
     }
   })
-  $("#reset-map").click(function() {
-    if (confirm("Are you sure you want to reset the map? This will clear all your changes made after the last page reload, or since the last import, if you didn't reload the page since then.")) {
+  $("#reset-map").click(async function() {
+    if (await confirmPopup("Reset", "Are you sure you want to reset the map?<br>This will reset the map to the last imported map.")) {
       var backup = JSON.parse(localStorage.getItem("lastImport"));
       if (!backup) {
-        return alert("No import found to set to.");
+        return alertPopup("Failed", "No import found to set to.");
       }
 
       window.field.maps.stones = backup.stones;
@@ -851,11 +901,11 @@ async function main() {
     }
   })
   $("#clear-map").click(function() {
-    var size = prompt("Are you sure you want to clear the map? This will delete all contents of map.\n\nSize (3-20):");
+    var size = prompt("Are you sure you want to clear the map?\nThis will delete all contents of map.\n\nSize (3-20):");
     if (size && parseInt(size)) {
       size = parseInt(size);
       if (size < 3 || size > 20) {
-        return alert("Size must be between 3 and 20.")
+        return alertPopup("Failed", "Size must be between 3 and 20.")
       }
       window.field.resize(size);
       saveMap();
@@ -885,7 +935,7 @@ async function main() {
     ], true)
   })
   $("#welcome-guide").click(function() {
-    window.location.href = "welcome";
+    showWelcomeGuide();
   })
   $("#source").click(function() {
     window.location.href = "https://github.com/J0J0HA/CoatiPython";
@@ -894,39 +944,53 @@ async function main() {
   applyUpdate();
 }
 
+function showWelcomeGuide() {
+  iframePopup("Welcome Guide", "/welcome", true, false, [
+    {
+      text: "Show again in 30 days",
+      onclick: () => {
+        localStorage.setItem("welcome", Date.now());
+        closePopup(getNewestPopup());
+        main();
+      }
+    },
+    {
+      text: "Show again next time",
+      onclick: () => {
+        localStorage.setItem("welcome", Date.now() - 1000 * 60 * 60 * 24 * 30);
+        closePopup(getNewestPopup());
+        main();
+      }
+    }
+  ], false);
+}
 
-$(() => {
+
+$(async () => {
   window.addEventListener('error', (event) => {
     alert("An error occurred at line " + event.lineno + " in column " + event.colno + ":\n" + event.message);
     Sentry.captureException(event)
   });
 
-  if (window.location.hash == "#welcome") {
-    localStorage.setItem("welcome", Date.now());
-  } else if (window.location.hash == "#welcome-again") {
-    localStorage.setItem("welcome", Date.now() - 1000 * 60 * 60 * 24 * 30);
-  }
-  window.location.hash = "#";
-
   var welcome = localStorage.getItem("welcome");
   var sentry = localStorage.getItem("sentry");
 
   if (!sentry) {
-    var allowed = confirm("Do you want to enable Sentry?\nThis will help fixing issues and improving performance.\nThe site will sent your IP-Adress, OS and Browser if you enable this. There is no other way to identify you than these values. Due to the way data is captured, it might contain parts of your python code, your map or your settings.");
-    alert("Currently there is no intended way to change this setting, but it is planned to be added. -> See 'Sentry' in the welcome guide.")
+    var allowed = await confirmPopup("Sentry", "Do you want to enable Sentry?<br><br>This will help fixing issues and improving performance.<br>The site will sent your IP-Adress, OS and Browser if you enable this.<br>There is no other way to identify you than these values.<br>Due to the way data is captured, it might contain parts<br>of your python code, your map or your settings.");
+    await alertPopup("Notice", "Currently there is no intended way to change this setting,<br>but it is planned to be added.<br>See <a target='_blank' href='https://github.com/J0J0HA/CoatiPython/issues/22#issuecomment-1268519476'>here</a> if you need to change it.")
     localStorage.setItem("sentry", allowed ? "ok" : "fb");
   }
 
   if (sentry == "ok") {
     Sentry.init({
       dsn: "https://2ca320a25f7d4a489293f9fe8b6f53df@o1162425.ingest.sentry.io/4503931212988416",
-      integrations: [/*new BrowserTracing()*/],
+      integrations: [new Sentry.BrowserTracing()],
       tracesSampleRate: 1.0,
     });
   }
 
   if ((!welcome) || (welcome < (Date.now() - 1000 * 60 * 60 * 24 * 30))) {
-    window.location.href = "welcome";
+    showWelcomeGuide();
   } else {
     main();
   }

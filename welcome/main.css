@@ -8,9 +8,16 @@ body {
 ul {
   list-style-type: square;
   list-style-position: outside;
-  padding-left: 20px;
 }
 
-a {
-  color: #6c96e3;
+a, a:visited, a:active {
+  text-decoration: underline;
+  color: #3a69e0;
+}
+a:hover {
+  text-decoration: dotted underline;
+  color: #5f88f2;
+}
+a:focus {
+  text-decoration: dashed underline;
 }

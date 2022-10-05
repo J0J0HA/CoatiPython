@@ -17,13 +17,16 @@ __errors = {
 
 def __jsfunc(func):
     def __wrapper():
+        error = None
         try:
             result = func()
-        except __py.JsException as e:
+        except __py.ffi.JsException as e:
             try:
-                raise __errors[str(e).removeprefix("Error: ")]
+                error = __errors[str(e).removeprefix("Error: ")]
             except KeyError as a:
                 raise KaraError("This Error is not meant to be thrown! Please report it (the entire message) on GitHub! (Go to Welcome Guide and click the desired link)") from e
+        if error is not None:
+            raise error
         __js.saveState()
         return result
     return __wrapper;
