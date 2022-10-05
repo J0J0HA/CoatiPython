@@ -912,8 +912,8 @@ $(() => {
   var sentry = localStorage.getItem("sentry");
 
   if (!sentry) {
-    var allowed = confirm("Do you want to enable Sentry?\nThis will help us fixing issues and improving performance.\nWe sent your IP, OS and Browser intentionally if it is necessary to understand an issue or performance leaks. Due to the way data is captured, it might contain parts of your code, your map or your setting.");
-    alert("To change this setting, currently you must wait for an update implementing setting or ask for support in an GitHub issue (See welcome guide).")
+    var allowed = confirm("Do you want to enable Sentry?\nThis will help fixing issues and improving performance.\nThe site will sent your IP-Adress, OS and Browser if you enable this. There is no other way to identify you than these values. Due to the way data is captured, it might contain parts of your python code, your map or your settings.");
+    alert("Currently there is no intended way to change this setting, but it is planned to be added. -> See 'Sentry' in the welcome guide.")
     localStorage.setItem("sentry", allowed ? "ok" : "fb");
   }
 
