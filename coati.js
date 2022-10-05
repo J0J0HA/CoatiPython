@@ -312,6 +312,8 @@ class Field {
   }
 
   update(obj) {
+    var transaction = Sentry.startTransaction({ op: "update()", name: "update()" });
+    const span = transaction.startChild({ op: "update()", name: "update()" }); // This function returns a Span
     this.shownState = obj;
     this.render_clear();
     for (var y = 0; y < this.size; y++) {
@@ -333,6 +335,8 @@ class Field {
     this.render_show(Item.figure, obj.figure.x, obj.figure.y, obj.figure.r);
 
     this.onupdate();
+    span.finish();
+    transaction.finish();
   }
 
   cset(x, y, i) {
@@ -670,7 +674,11 @@ async function main() {
       window.running = true;
       $("#skip").css("opacity", "1");
       try {
+        const transaction = Sentry.startTransaction({ name: "runPython()", op: "runPython()" });
+        const span = transaction.startChild({ name: "runPython()", op: "runPython()" }); // This function returns a Span
         pyodide.runPython($("#input").val(), {})
+        span.finish(); // Remember that only finished spans will be sent with the transaction
+        transaction.finish(); // Finishing the transaction will send it to Sentry
       } catch (e) {
         window.queue.push(["error", [e]])
       }
@@ -877,7 +885,6 @@ async function main() {
     ], true)
   })
   $("#welcome-guide").click(function() {
-    throw new Error("test");
     window.location.href = "welcome";
   })
   $("#source").click(function() {
@@ -891,6 +898,7 @@ async function main() {
 $(() => {
   window.addEventListener('error', (event) => {
     alert("An error occurred at line " + event.lineno + " in column " + event.colno + ":\n" + event.message);
+    Sentry.captureException(event)
   });
 
   if (window.location.hash == "#welcome") {
@@ -901,6 +909,21 @@ $(() => {
   window.location.hash = "#";
 
   var welcome = localStorage.getItem("welcome");
+  var sentry = localStorage.getItem("sentry");
+
+  if (!sentry) {
+    var allowed = confirm("Do you want to enable Sentry?\nThis will help us fixing issues and improving performance.\nWe sent your IP, OS and Browser intentionally if it is necessary to understand an issue or performance leaks. Due to the way data is captured, it might contain parts of your code, your map or your setting.");
+    alert("To change this setting, currently you must wait for an update implementing setting or ask for support in an GitHub issue (See welcome guide).")
+    localStorage.setItem("sentry", allowed ? "ok" : "fb");
+  }
+
+  if (sentry == "ok") {
+    Sentry.init({
+      dsn: "https://2ca320a25f7d4a489293f9fe8b6f53df@o1162425.ingest.sentry.io/4503931212988416",
+      integrations: [/*new BrowserTracing()*/],
+      tracesSampleRate: 1.0,
+    });
+  }
 
   if ((!welcome) || (welcome < (Date.now() - 1000 * 60 * 60 * 24 * 30))) {
     window.location.href = "welcome";
