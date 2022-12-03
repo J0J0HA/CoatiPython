@@ -610,7 +610,7 @@ async function main() {
   window.pyodide.FS.create("kara.py");
   window.pyodide.FS.writeFile("kara.py", (await (await window.fetch("kara.py")).text()));
   window.pyodide.FS.create("coatide.py");
-  window.pyodide.FS.writeFile("coatide.py", (await (await window.fetch("kara.py")).text()));
+  window.pyodide.FS.writeFile("coatide.py", (await (await window.fetch("coatide.py")).text()));
   window.savedMap = JSON.parse(localStorage.getItem("map"));
   window.speed = 250;
   window.field = new Field("#output", saveMap);
