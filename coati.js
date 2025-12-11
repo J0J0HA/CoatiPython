@@ -348,8 +348,6 @@ class Field {
   }
 
   update(obj) {
-    var transaction = Sentry.startTransaction({ op: "update()", name: "update()" });
-    const span = transaction.startChild({ op: "update()", name: "update()" }); // This function returns a Span
     this.shownState = obj;
     this.render_clear();
     for (var y = 0; y < this.size; y++) {
@@ -371,8 +369,6 @@ class Field {
     this.render_show(Item.figure, obj.figure.x, obj.figure.y, obj.figure.r);
 
     this.onupdate();
-    span.finish();
-    transaction.finish();
   }
 
   cset(x, y, i) {
@@ -716,11 +712,7 @@ async function main() {
       window.running = true;
       $("#skip").css("opacity", "1");
       try {
-        const transaction = Sentry.startTransaction({ name: "runPython()", op: "runPython()" });
-        const span = transaction.startChild({ name: "runPython()", op: "runPython()" }); // This function returns a Span
         pyodide.runPython($("#input").val(), {})
-        span.finish(); // Remember that only finished spans will be sent with the transaction
-        transaction.finish(); // Finishing the transaction will send it to Sentry
       } catch (e) {
         window.lastError = e;
         window.queue.push(["error", [e]])
@@ -971,25 +963,16 @@ function showWelcomeGuide() {
 $(async () => {
   window.addEventListener('error', (event) => {
     alert("An error occurred at line " + event.lineno + " in column " + event.colno + ":\n" + event.message);
-    Sentry.captureException(event)
   });
 
   var welcome = localStorage.getItem("welcome");
   var sentry = localStorage.getItem("sentry");
 
-  if (!sentry) {
-    var allowed = await confirmPopup("Sentry", "Do you want to enable Sentry?<br><br>This will help fixing issues and improving performance.<br>The site will sent your IP-Adress, OS and Browser if you enable this.<br>There is no other way to identify you than these values.<br>Due to the way data is captured, it might contain parts<br>of your python code, your map or your settings.<br><br>Notice: Even if you decline this, it does not mean no data is being collected, its just not sent to the server.");
-    await alertPopup("Notice", "Currently there is no intended way to change this setting,<br>but it is planned to be added.<br>See <a target='_blank' href='https://github.com/J0J0HA/CoatiPython/issues/22#issuecomment-1268519476'>here</a> if you need to change it.")
-    localStorage.setItem("sentry", allowed ? "ok" : "fb");
-  }
-
-  if (sentry == "ok") {
-    Sentry.init({
-      dsn: "https://2ca320a25f7d4a489293f9fe8b6f53df@o1162425.ingest.sentry.io/4503931212988416",
-      integrations: [new Sentry.BrowserTracing()],
-      tracesSampleRate: 1.0,
-    });
-  }
+  // if (!sentry) {
+  //   var allowed = await confirmPopup("Sentry", "Do you want to enable Sentry?<br><br>This will help fixing issues and improving performance.<br>The site will sent your IP-Adress, OS and Browser if you enable this.<br>There is no other way to identify you than these values.<br>Due to the way data is captured, it might contain parts<br>of your python code, your map or your settings.<br><br>Notice: Even if you decline this, it does not mean no data is being collected, its just not sent to the server.");
+  //   await alertPopup("Notice", "Currently there is no intended way to change this setting,<br>but it is planned to be added.<br>See <a target='_blank' href='https://github.com/J0J0HA/CoatiPython/issues/22#issuecomment-1268519476'>here</a> if you need to change it.")
+  //   localStorage.setItem("sentry", allowed ? "ok" : "fb");
+  // }
 
   if ((!welcome) || (welcome < (Date.now() - 1000 * 60 * 60 * 24 * 30))) {
     showWelcomeGuide();
